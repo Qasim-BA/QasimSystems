@@ -281,8 +281,8 @@
         ];
 
         // Get references to DOM elements
-        const categoryTabsDiv = document.getElementById('category-tabs');
-        const categorizedItemsContainer = document.getElementById('categorized-items-container');
+        const categoryTabsDiv = document.getElementById('category-tabs'); // New element
+        const categorizedItemsContainer = document.getElementById('categorized-items-container'); // New element
         const submitButton = document.getElementById('submit-order-btn');
         const orderSummaryDiv = document.getElementById('order-summary');
         const summaryList = document.getElementById('summary-list');
@@ -376,6 +376,7 @@
                     console.warn(`Item "${item.name}" has an unknown type "${item.type}". Appending to General Food.`);
                     categorySections['General Food'].appendChild(itemCard);
                 }
+
 
                 const checkbox = itemCard.querySelector(`#checkbox-${item.id}`);
                 const quantityInput = itemCard.querySelector(`#quantity-${item.id}`);
