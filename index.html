@@ -118,7 +118,7 @@
 
     <script>
         // IMPORTANT: Replace 'YOUR_WEB_APP_URL_HERE' with the URL you copied from Google Apps Script deployment.
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz41kci-9LLLJILLTskIwlRaoB670OXQNXyMcR1BTPf/dev'; // <--- REPLACE THIS!
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwB6uSAEZEcPKwWBxWSGHKjaGHsH2inzjQpjiNCVR9nzhpkWNarlY3t39p5H5rIcaJBAA/exec'; // <--- REPLACE THIS!
 
         // Array of available items for the purchase order, now including 'type'
         const availableItems = [
@@ -281,8 +281,8 @@
         ];
 
         // Get references to DOM elements
-        const categoryTabsDiv = document.getElementById('category-tabs'); // New element
-        const categorizedItemsContainer = document.getElementById('categorized-items-container'); // New element
+        const categoryTabsDiv = document.getElementById('category-tabs');
+        const categorizedItemsContainer = document.getElementById('categorized-items-container');
         const submitButton = document.getElementById('submit-order-btn');
         const orderSummaryDiv = document.getElementById('order-summary');
         const summaryList = document.getElementById('summary-list');
@@ -376,7 +376,6 @@
                     console.warn(`Item "${item.name}" has an unknown type "${item.type}". Appending to General Food.`);
                     categorySections['General Food'].appendChild(itemCard);
                 }
-
 
                 const checkbox = itemCard.querySelector(`#checkbox-${item.id}`);
                 const quantityInput = itemCard.querySelector(`#quantity-${item.id}`);
