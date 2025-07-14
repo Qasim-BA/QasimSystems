@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material Purchase Form</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to start for better scrolling on smaller screens */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        /* Ensure the main container is responsive and centered */
+        .form-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .item-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        .quantity-input:focus {
+            outline: none;
+            border-color: #3b82f6; /* Blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Blue-300 with transparency */
+        }
+        /* Styling for loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Material Purchase form</h1>
+
+        <!-- New: Tab Navigation -->
+        <div id="category-tabs" class="flex flex-wrap justify-center gap-2 mb-6">
+            <!-- Tab buttons will be rendered here by JavaScript -->
+        </div>
+
+        <!-- New: Container for all categorized items -->
+        <div id="categorized-items-container">
+            <!-- Category sections with items will be rendered here by JavaScript -->
+        </div>
+
+        <button id="submit-order-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+            Submit Order
+        </button>
+
+        <div id="order-summary" class="mt-10 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-sm hidden">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Order Summary</h2>
+            <ul id="summary-list" class="list-disc pl-5 text-gray-700">
+                <!-- Order summary items will be displayed here -->
+            </ul>
+            <p id="no-items-selected" class="text-gray-500 italic mt-2 hidden">No items selected for order.</p>
+        </div>
+
+        <!-- Custom Alert/Message Box -->
+        <div id="custom-alert" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <p id="alert-message" class="text-lg font-medium text-gray-800 mb-4"></p>
+                <button id="alert-ok-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-md transition duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Submitting order...</p>
+        </div>
+
+    </div>
+
+    <script>
+        // IMPORTANT: Replace 'YOUR_WEB_APP_URL_HERE' with the URL you copied from Google Apps Script deployment.
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwB6uSAEZEcPKwWBxWSGHKjaGHsH2inzjQpjiNCVR9nzhpkWNarlY3t39p5H5rIcaJBAA/exec'; // <--- REPLACE THIS!
+
+        // Array of available items for the purchase order, now including 'type'
+        const availableItems = [
+            { id: 'item_pizza_box_9x9', name: 'Pizza box 9x9', unit: 'unit', type: 'Packing' },
+            { id: 'item_ajinomoto', name: 'Ajinomoto', unit: 'unit', type: 'General Food' },
+            { id: 'item_macaron_powder', name: 'Macaron Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_aluminum_foil', name: 'Aluminum Foil', unit: 'unit', type: 'Packing' },
+            { id: 'item_aluminum_tray_1x100_regular_size', name: 'Aluminum Tray 1x100 Regular size', unit: 'unit', type: 'Packing' },
+            { id: 'item_aluminum_tray_1x50_big_size', name: 'Aluminum Tray 1x50 Big size', unit: 'unit', type: 'Packing' },
+            { id: 'item_apple_filling', name: 'Apple Filling', unit: 'unit', type: 'General Food' },
+            { id: 'item_baking_powder', name: 'Baking Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_beef_burger', name: 'Beef Burger', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_beef_liver', name: 'Beef Liver', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_beef_tenderloin', name: 'Beef Tenderloin', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_beef_topside_brazil', name: 'Beef Topside Brazil', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_black_garbage_bag', name: 'Black Garbage Bag', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_black_grains_bread', name: 'Black Grains Bread', unit: 'unit', type: 'General Food' },
+            { id: 'item_black_olives_slice', name: 'Black Olives slice', unit: 'unit', type: 'General Food' },
+            { id: 'item_black_pepper_powder_24x250grm', name: 'Black Pepper powder 24x250grm', unit: 'unit', type: 'General Food' },
+            { id: 'item_blue_barry_filling', name: 'Blue-Barry Filling', unit: 'unit', type: 'General Food' },
+            { id: 'item_broad_beans', name: 'Broad Beans', unit: 'unit', type: 'General Food' },
+            { id: 'item_burghul_brown', name: 'Burghul Brown', unit: 'unit', type: 'General Food' },
+            { id: 'item_butter_block', name: 'Butter Block', unit: 'unit', type: 'Dairy' },
+            { id: 'item_butter_paper', name: 'Butter Paper', unit: 'unit', type: 'Packing' },
+            { id: 'item_cake_box_size_25', name: 'Cake Box size 25', unit: 'unit', type: 'Packing' },
+            { id: 'item_cake_box_size_30', name: 'Cake Box size 30', unit: 'unit', type: 'Packing' },
+            { id: 'item_cake_box_size_35', name: 'Cake Box size 35', unit: 'unit', type: 'Packing' },
+            { id: 'item_cake_marking', name: 'Cake Marking', unit: 'unit', type: 'Packing' },
+            { id: 'item_cardamom_powder_24x250', name: 'Cardamom Powder 24x250', unit: 'unit', type: 'General Food' },
+            { id: 'item_cashewnut', name: 'Cashewnut', unit: 'unit', type: 'General Food' },
+            { id: 'item_chicken_breast', name: 'Chicken Breast', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_chicken_burger', name: 'Chicken Burger', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_chicken_fillet', name: 'Chicken Fillet', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_chicken_liver', name: 'Chicken Liver', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_chicken_sausage', name: 'Chicken Sausage', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_chicken_shawarma', name: 'Chicken Shawarma', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_chickpeas', name: 'Chickpeas', unit: 'unit', type: 'General Food' },
+            { id: 'item_cinnamon_powder_24x250', name: 'Cinnamon Powder 24x250', unit: 'unit', type: 'General Food' },
+            { id: 'item_clear_tap_48mmx36', name: 'Clear Tap 48mmX36', unit: 'unit', type: 'Packing' },
+            { id: 'item_cling_film_30cm', name: 'Cling Film 30cm', unit: 'unit', type: 'Packing' },
+            { id: 'item_cling_film_45cm', name: 'Cling Film 45cm', unit: 'unit', type: 'Packing' },
+            { id: 'item_clorix', name: 'Clorix', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_coconut_powder', name: 'Coconut Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_coffee_cup', name: 'Coffee Cup', unit: 'unit', type: 'Packing' },
+            { id: 'item_compound_dark_chocolate', name: 'Compound Dark Chocolate', unit: 'unit', type: 'General Food' },
+            { id: 'item_coriander_powder_24x250', name: 'Coriander Powder 24x250', unit: 'unit', type: 'General Food' },
+            { id: 'item_corn_flour', name: 'Corn Flour', unit: 'unit', type: 'General Food' },
+            { id: 'item_cream_cake_mix_chocolate', name: 'Cream Cake Mix Chocolate', unit: 'unit', type: 'General Food' },
+            { id: 'item_cream_cake_mix_vanilla', name: 'Cream Cake Mix Vanilla', unit: 'unit', type: 'General Food' },
+            { id: 'item_cumin_powder_24x250', name: 'Cumin Powder 24x250', unit: 'unit', type: 'General Food' },
+            { id: 'item_cup_cake_size_9_5', name: 'Cup-Cake size 9.5', unit: 'unit', type: 'Packing' },
+            { id: 'item_custard_powder', name: 'Custard Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_dark_chocolate_coins', name: 'Dark Chocolate Coins', unit: 'unit', type: 'General Food' },
+            { id: 'item_dark_malts', name: 'Dark Malts', unit: 'unit', type: 'General Food' },
+            { id: 'item_dates_syrup', name: 'Dates Syrup', unit: 'unit', type: 'General Food' },
+            { id: 'item_detergent_powder', name: 'Detergent Powder', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_digestive_biscuits', name: 'Digestive Biscuits', unit: 'unit', type: 'General Food' },
+            { id: 'item_donut_box', name: 'Donut Box', unit: 'unit', type: 'Packing' },
+            { id: 'item_egyptian_rice', name: 'Egyptian Rice', unit: 'unit', type: 'General Food' },
+            { id: 'item_feta_cheese', name: 'Feta Cheese', unit: 'unit', type: 'General Food' },
+            { id: 'item_foam_plate_s1', name: 'Foam Plate S1', unit: 'unit', type: 'Packing' },
+            { id: 'item_foam_plate_s2', name: 'Foam Plate S2', unit: 'unit', type: 'Packing' },
+            { id: 'item_foam_plate_s3', name: 'Foam Plate S3', unit: 'unit', type: 'Packing' },
+            { id: 'item_foam_plate_s4', name: 'Foam Plate S4', unit: 'unit', type: 'Packing' },
+            { id: 'item_fondant_sugar', name: 'Fondant Sugar', unit: 'unit', type: 'General Food' },
+            { id: 'item_french_fries', name: 'French Fries', unit: 'unit', type: 'General Food' },
+            { id: 'item_fresh_cream', name: 'Fresh Cream', unit: 'unit', type: 'Dairy' },
+            { id: 'item_frosting_sheets', name: 'Frosting Sheets', unit: 'unit', type: 'Packing' },
+            { id: 'item_fruits_cocktail', name: 'Fruits Cocktail', unit: 'unit', type: 'General Food' },
+            { id: 'item_garlic_powder_24x250grm', name: 'Garlic Powder 24x250grm', unit: 'unit', type: 'General Food' },
+            { id: 'item_ghee', name: 'Ghee', unit: 'unit', type: 'General Food' },
+            { id: 'item_ginger_powder_24x250grm', name: 'Ginger Powder 24x250grm', unit: 'unit', type: 'General Food' },
+            { id: 'item_gloves_large', name: 'Gloves Large', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_gloves_medium', name: 'Gloves Medium', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_gloves_xlarge', name: 'Gloves Xlarge', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_golden_twist_pin', name: 'Golden Twist Pin', unit: 'unit', type: 'Packing' },
+            { id: 'item_grape_leaves', name: 'Grape Leaves', unit: 'unit', type: 'General Food' },
+            { id: 'item_green_olives_slice', name: 'Green Olives slice', unit: 'unit', type: 'General Food' },
+            { id: 'item_hair_net_cap', name: 'Hair Net Cap', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_hand_soap', name: 'Hand Soap', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_hd_carry_bag_large', name: 'HD Carry Bag Large', unit: 'unit', type: 'Packing' },
+            { id: 'item_hd_carry_bag_xl', name: 'HD Carry Bag XL', unit: 'unit', type: 'Packing' },
+            { id: 'item_hd_carry_bag_xxl', name: 'HD Carry Bag XXL', unit: 'unit', type: 'Packing' },
+            { id: 'item_hot_pepper_paste', name: 'Hot Pepper Paste', unit: 'unit', type: 'General Food' },
+            { id: 'item_hot_sauce', name: 'Hot Sauce', unit: 'unit', type: 'General Food' },
+            { id: 'item_kabab_powder', name: 'Kabab Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_kiri_cheese', name: 'Kiri Cheese', unit: 'unit', type: 'Dairy' },
+            { id: 'item_labna', name: 'Labna', unit: 'unit', type: 'Dairy' },
+            { id: 'item_mutton_leg', name: 'Mutton Leg', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_maxi_roll', name: 'Maxi Roll', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_mayonnaise_gallon', name: 'Mayonnaise Gallon', unit: 'unit', type: 'General Food' },
+            { id: 'item_mayonnaise_sachet', name: 'Mayonnaise Sachet', unit: 'unit', type: 'General Food' },
+            { id: 'item_meats_masala_24x250', name: 'Meats Masala 24x250', unit: 'unit', type: 'General Food' },
+            { id: 'item_milk_1l', name: 'Milk 1L', unit: 'unit', type: 'Dairy' },
+            { id: 'item_milk_powder', name: 'Milk Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_minced_beef', name: 'Minced Beef', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_mix_bahrain_masala_24x250', name: 'Mix Bahrain Masala 24x250', unit: 'unit', type: 'General Food' },
+            { id: 'item_mixed_fruits_jam', name: 'Mixed Fruits Jam', unit: 'unit', type: 'General Food' },
+            { id: 'item_mozzarella_cheese', name: 'Mozzarella Cheese', unit: 'unit', type: 'Dairy' },
+            { id: 'item_mushrooms', name: 'Mushrooms', unit: 'unit', type: 'General Food' },
+            { id: 'item_mutton_fat', name: 'Mutton Fat', unit: 'unit', type: 'Halal Meat' },
+            { id: 'item_nestle_coffee', name: 'Nestle Coffee', unit: 'unit', type: 'General Food' },
+            { id: 'item_nestle_cream', name: 'Nestle Cream', unit: 'unit', type: 'General Food' },
+            { id: 'item_neutral_cold_glaze', name: 'Neutral Cold Glaze', unit: 'unit', type: 'General Food' },
+            { id: 'item_olive_oil_4x4', name: 'Olive Oil 4x4', unit: 'unit', type: 'General Food' },
+            { id: 'item_orange_color', name: 'Orange Color', unit: 'unit', type: 'General Food' },
+            { id: 'item_orange_flavor', name: 'Orange Flavor', unit: 'unit', type: 'General Food' },
+            { id: 'item_oyster_sauce', name: 'Oyster sauce', unit: 'unit', type: 'General Food' },
+            { id: 'item_paper_bag_size_no1', name: 'Paper Bag size no1', unit: 'unit', type: 'Packing' },
+            { id: 'item_paper_bag_size_no2', name: 'Paper Bag size no2', unit: 'unit', type: 'Packing' },
+            { id: 'item_paper_bag_size_no3', name: 'Paper Bag size no3', unit: 'unit', type: 'Packing' },
+            { id: 'item_pastry_margins', name: 'Pastry Margins', unit: 'unit', type: 'General Food' },
+            { id: 'item_peaches_slice', name: 'Peaches Slice', unit: 'unit', type: 'General Food' },
+            { id: 'item_peanuts', name: 'Peanuts', unit: 'unit', type: 'General Food' },
+            { id: 'item_pineapple_slice', name: 'Pineapple Slice', unit: 'unit', type: 'General Food' },
+            { id: 'item_pistachio_kernel', name: 'Pistachio Kernel', unit: 'unit', type: 'General Food' },
+            { id: 'item_pizza_paper_box_big_size', name: 'Pizza Paper Box big size', unit: 'unit', type: 'Packing' },
+            { id: 'item_pizza_sauce', name: 'Pizza Sauce', unit: 'unit', type: 'General Food' },
+            { id: 'item_plastic_spoon', name: 'Plastic Spoon', unit: 'unit', type: 'General Food' },
+            { id: 'item_pts_box', name: 'Pts Box', unit: 'unit', type: 'Packing' },
+            { id: 'item_raisins', name: 'Raisins', unit: 'unit', type: 'General Food' },
+            { id: 'item_red_chili_powder_12x250', name: 'Red Chili Powder 12x250', unit: 'unit', type: 'General Food' },
+            { id: 'item_rhc2_box', name: 'Rhc2 Box', unit: 'unit', type: 'Packing' },
+            { id: 'item_rhc5_box', name: 'Rhc5 Box', unit: 'unit', type: 'Packing' },
+            { id: 'item_sandwich_box', name: 'Sandwich Box', unit: 'unit', type: 'Packing' },
+            { id: 'item_semolina', name: 'Semolina', unit: 'unit', type: 'General Food' },
+            { id: 'item_sesame_seed', name: 'Sesame Seed', unit: 'unit', type: 'General Food' },
+            { id: 'item_shortening', name: 'Shortening', unit: 'unit', type: 'General Food' },
+            { id: 'item_sodium_bicarbonate', name: 'Sodium Bicarbonate', unit: 'unit', type: 'General Food' },
+            { id: 'item_soya_sauce', name: 'Soya Sauce', unit: 'unit', type: 'General Food' },
+            { id: 'item_sponge_cake_mix_chocolate', name: 'Sponge Cake Mix Chocolate', unit: 'unit', type: 'General Food' },
+            { id: 'item_sponge_cake_mix_vanilla', name: 'Sponge Cake Mix Vanilla', unit: 'unit', type: 'General Food' },
+            { id: 'item_spring_roll_paper', name: 'Spring Roll Paper', unit: 'unit', type: 'General Food' },
+            { id: 'item_sugar', name: 'Sugar', unit: 'unit', type: 'General Food' },
+            { id: 'item_sumac_powder_24x250grm', name: 'Sumac Powder 24x250grm', unit: 'unit', type: 'General Food' },
+            { id: 'item_sunflower_oil_6x1_8', name: 'Sunflower Oil 6x1.8', unit: 'unit', type: 'General Food' },
+            { id: 'item_tahina', name: 'Tahina', unit: 'unit', type: 'General Food' },
+            { id: 'item_tea_powder', name: 'Tea Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_tomato_ketchup_gallon', name: 'Tomato Ketchup Gallon', unit: 'unit', type: 'General Food' },
+            { id: 'item_tomato_paste', name: 'Tomato Paste', unit: 'unit', type: 'General Food' },
+            { id: 'item_tomatoes_ketchup_sachet', name: 'Tomatoes Ketchup Sachet', unit: 'unit', type: 'General Food' },
+            { id: 'item_topping_for_special_bread', name: 'Topping for Special Bread', unit: 'unit', type: 'General Food' },
+            { id: 'item_turmeric_powder', name: 'Turmeric Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_tutti_frutti', name: 'Tutti frutti', unit: 'unit', type: 'General Food' },
+            { id: 'item_vanilla_essence', name: 'Vanilla Essence', unit: 'unit', type: 'General Food' },
+            { id: 'item_vanilla_powder', name: 'Vanilla Powder', unit: 'unit', type: 'General Food' },
+            { id: 'item_vegetables_oil', name: 'Vegetables Oil', unit: 'unit', type: 'General Food' },
+            { id: 'item_whipping_cream', name: 'Whipping Cream', unit: 'unit', type: 'Dairy' },
+            { id: 'item_compound_white_chocolate', name: 'Compound White Chocolate', unit: 'unit', type: 'General Food' },
+            { id: 'item_white_garbage_bag', name: 'White Garbage Bag', unit: 'unit', type: 'Hygiene' },
+            { id: 'item_white_improver', name: 'White Improver', unit: 'unit', type: 'General Food' },
+            { id: 'item_white_pepper_powder_24x250grm', name: 'White Pepper Powder 24x250grm', unit: 'unit', type: 'General Food' },
+            { id: 'item_white_slice_cheese', name: 'White Slice Cheese', unit: 'unit', type: 'Dairy' },
+            { id: 'item_white_vinegar', name: 'White Vinegar', unit: 'unit', type: 'General Food' },
+            { id: 'item_whole_meal_flower', name: 'Whole Meal Flower', unit: 'unit', type: 'General Food' },
+            { id: 'item_yeast', name: 'Yeast', unit: 'unit', type: 'General Food' },
+            { id: 'item_yellow_color', name: 'Yellow Color', unit: 'unit', type: 'General Food' },
+            { id: 'item_yogurt', name: 'Yogurt', unit: 'unit', type: 'Dairy' },
+            { id: 'item_zatter', name: 'Zatter', unit: 'unit', type: 'General Food' }
+        ];
+
+        // Get references to DOM elements
+        const categoryTabsDiv = document.getElementById('category-tabs'); // New element
+        const categorizedItemsContainer = document.getElementById('categorized-items-container'); // New element
+        const submitButton = document.getElementById('submit-order-btn');
+        const orderSummaryDiv = document.getElementById('order-summary');
+        const summaryList = document.getElementById('summary-list');
+        const noItemsSelectedMsg = document.getElementById('no-items-selected');
+        const customAlert = document.getElementById('custom-alert');
+        const alertMessage = document.getElementById('alert-message');
+        const alertOkBtn = document.getElementById('alert-ok-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        /**
+         * Displays a custom alert message to the user.
+         * @param {string} message - The message to display in the alert.
+         */
+        function showAlert(message) {
+            alertMessage.textContent = message;
+            customAlert.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the custom alert message.
+         */
+        function hideAlert() {
+            customAlert.classList.add('hidden');
+        }
+
+        // Add event listener to the alert OK button
+        alertOkBtn.addEventListener('click', hideAlert);
+
+        // Get unique categories from the availableItems list
+        const categories = ['All']; // Start with 'All' tab
+        availableItems.forEach(item => {
+            if (item.type && !categories.includes(item.type)) {
+                categories.push(item.type);
+            }
+        });
+
+        let activeCategory = 'All'; // Track the currently active category
+
+        /**
+         * Renders the tab buttons and all items grouped by category into hidden sections.
+         */
+        function renderItems() {
+            // Render tab buttons
+            categoryTabsDiv.innerHTML = '';
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.textContent = category;
+                button.className = `tab-button px-4 py-2 rounded-md font-medium transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`;
+                button.dataset.category = category;
+                categoryTabsDiv.appendChild(button);
+
+                button.addEventListener('click', () => switchCategory(category));
+            });
+
+            // Render all items into their respective category sections
+            categorizedItemsContainer.innerHTML = '';
+            const categorySections = {};
+
+            // Create a section for each unique category
+            categories.forEach(category => {
+                const section = document.createElement('div');
+                // Create a clean ID for the section, replacing spaces with hyphens and making it lowercase
+                section.id = `category-section-${category.replace(/\s+/g, '-').toLowerCase()}`;
+                section.className = `category-section grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 hidden`; // Hidden by default
+                categorizedItemsContainer.appendChild(section);
+                categorySections[category] = section;
+            });
+
+            // Populate category sections with items
+            availableItems.forEach(item => {
+                const itemCard = document.createElement('div');
+                itemCard.className = 'item-card bg-white p-5 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between border border-gray-200';
+                itemCard.innerHTML = `
+                    <div class="flex items-center mb-3 sm:mb-0">
+                        <input type="checkbox" id="checkbox-${item.id}" data-item-id="${item.id}" class="item-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                        <label for="checkbox-${item.id}" class="ml-3 text-lg font-medium text-gray-700 cursor-pointer">${item.name}</label>
+                    </div>
+                    <div class="flex items-center w-full sm:w-auto">
+                        <label for="quantity-${item.id}" class="text-gray-600 mr-2 whitespace-nowrap">Quantity (${item.unit}):</label>
+                        <input type="number" id="quantity-${item.id}" data-item-id="${item.id}" min="1" value="0" class="quantity-input mt-1 block w-24 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-sm disabled:opacity-75 disabled:cursor-not-allowed">
+                    </div>
+                `;
+
+                // Append item card to its specific category section
+                const targetCategory = item.type || 'General Food'; // Default to 'General Food' if type is missing
+                const targetSection = categorySections[targetCategory];
+                if (targetSection) {
+                    targetSection.appendChild(itemCard);
+                } else {
+                    // Fallback for items with an unexpected type (shouldn't happen if list is complete)
+                    console.warn(`Item "${item.name}" has an unknown type "${item.type}". Appending to General Food.`);
+                    categorySections['General Food'].appendChild(itemCard);
+                }
+
+
+                const checkbox = itemCard.querySelector(`#checkbox-${item.id}`);
+                const quantityInput = itemCard.querySelector(`#quantity-${item.id}`);
+
+                quantityInput.disabled = true;
+
+                checkbox.addEventListener('change', (event) => {
+                    if (event.target.checked) {
+                        quantityInput.disabled = false;
+                        quantityInput.value = 1;
+                        quantityInput.focus();
+                        quantityInput.classList.add('bg-white');
+                        quantityInput.classList.remove('bg-gray-100');
+                    } else {
+                        quantityInput.disabled = true;
+                        quantityInput.value = 0;
+                        quantityInput.classList.remove('bg-white');
+                        quantityInput.classList.add('bg-gray-100');
+                    }
+                });
+
+                quantityInput.addEventListener('input', (event) => {
+                    let value = parseInt(event.target.value);
+                    if (isNaN(value) || value < 0) {
+                        event.target.value = 0;
+                    } else if (value > 9999) {
+                        event.target.value = 9999;
+                    }
+                });
+            });
+
+            // Set initial active category
+            switchCategory('All');
+        }
+
+        /**
+         * Switches the displayed category of items.
+         * @param {string} category - The category to display.
+         */
+        function switchCategory(category) {
+            activeCategory = category;
+
+            // Update tab button styles
+            document.querySelectorAll('.tab-button').forEach(button => {
+                if (button.dataset.category === category) {
+                    button.classList.add('bg-blue-600', 'text-white');
+                    button.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                } else {
+                    button.classList.remove('bg-blue-600', 'text-white');
+                    button.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                }
+            });
+
+            // Show/hide category sections
+            document.querySelectorAll('.category-section').forEach(section => {
+                section.classList.add('hidden'); // Hide all sections by default
+            });
+
+            if (category === 'All') {
+                // Show all individual category sections
+                document.querySelectorAll('.category-section').forEach(section => {
+                    section.classList.remove('hidden');
+                });
+            } else {
+                // Show only the selected category section
+                const targetSectionId = `category-section-${category.replace(/\s+/g, '-').toLowerCase()}`;
+                const targetSection = document.getElementById(targetSectionId);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                }
+            }
+        }
+
+        /**
+         * Handles the submission of the order form.
+         * Gathers selected items and their quantities, then sends them to Google Apps Script.
+         */
+        async function handleSubmitOrder() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const order = [];
+            let hasInvalidQuantity = false;
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const itemId = checkbox.dataset.itemId;
+                    const quantityInput = document.getElementById(`quantity-${itemId}`);
+                    const quantity = parseInt(quantityInput.value);
+
+                    const itemDetails = availableItems.find(item => item.id === itemId);
+
+                    if (itemDetails && quantity > 0) {
+                        order.push({
+                            name: itemDetails.name,
+                            quantity: quantity,
+                            unit: itemDetails.unit
+                        });
+                    } else if (itemDetails && quantity <= 0) {
+                        showAlert(`Please enter a valid quantity for "${itemDetails.name}". Quantity must be greater than 0.`);
+                        hasInvalidQuantity = true;
+                    }
+                }
+            });
+
+            if (hasInvalidQuantity) {
+                return; // Stop submission if any invalid quantity is found
+            }
+
+            if (order.length === 0) {
+                showAlert("Please select at least one item and enter a valid quantity to submit your order.");
+                return;
+            }
+
+            // Show loading overlay
+            loadingOverlay.classList.remove('hidden');
+            submitButton.disabled = true; // Disable button during submission
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Required for Google Apps Script Web Apps when not using CORS headers
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ orders: order, submittedBy: 'Storekeeper' }) // You can add a 'submittedBy' field here
+                });
+
+                // Due to 'no-cors' mode, we can't directly read response.json()
+                // The Apps Script will still execute and write to the sheet.
+                // We assume success if no network error occurred.
+                showAlert('Order submitted successfully! Check your Google Sheet.');
+                // Optionally, clear the form after successful submission
+                clearForm();
+
+            } catch (error) {
+                console.error('Error submitting order:', error);
+                showAlert('Failed to submit order. Please try again. Error: ' + error.message);
+            } finally {
+                // Hide loading overlay
+                loadingOverlay.classList.add('hidden');
+                submitButton.disabled = false; // Re-enable button
+            }
+
+            // Display local summary (optional, but good for immediate feedback)
+            displayLocalSummary(order);
+        }
+
+        /**
+         * Displays the order summary locally after submission attempt.
+         * @param {Array} order - The array of ordered items.
+         */
+        function displayLocalSummary(order) {
+            summaryList.innerHTML = '';
+            orderSummaryDiv.classList.remove('hidden');
+
+            if (order.length === 0) {
+                noItemsSelectedMsg.classList.remove('hidden');
+                summaryList.classList.add('hidden');
+            } else {
+                noItemsSelectedMsg.classList.add('hidden');
+                summaryList.classList.remove('hidden');
+                order.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${item.name}: ${item.quantity} ${item.unit}`;
+                    summaryList.appendChild(listItem);
+                });
+            }
+        }
+
+        /**
+         * Clears all selected checkboxes and resets quantities.
+         */
+        function clearForm() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                const quantityInput = document.getElementById(`quantity-${checkbox.dataset.itemId}`);
+                quantityInput.value = 0;
+                quantityInput.disabled = true;
+                quantityInput.classList.remove('bg-white');
+                quantityInput.classList.add('bg-gray-100');
+            });
+            orderSummaryDiv.classList.add('hidden'); // Hide summary after clearing
+        }
+
+        // Add event listener to the submit button
+        submitButton.addEventListener('click', handleSubmitOrder);
+
+        // Initial render of items when the page loads
+        window.onload = renderItems;
+    </script>
+</body>
+</html>
