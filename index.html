@@ -104,6 +104,24 @@
         .cover-page-button:hover {
             background-color: #2563eb; /* bg-blue-600 */
         }
+        /* Styling for LPO Dashboard */
+        .lpo-dashboard-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .order-card {
+            background-color: #f8fafc; /* bg-gray-50 */
+            border: 1px solid #e2e8f0; /* border-gray-200 */
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -111,7 +129,7 @@
     <div id="cover-page-container" class="cover-page-container hidden">
         <div class="cover-page-card">
             <h1 class="text-4xl font-bold text-gray-800 mb-6">Welcome!</h1>
-            <p class="text-gray-600 text-lg mb-8">Please enter your name to proceed to the Material Purchase Order form.</p>
+            <p class="text-gray-600 text-lg mb-8">Please enter your name to proceed.</p>
             <input type="text" id="user-name-input" class="cover-page-input" placeholder="Your Name" required>
             <button id="proceed-button" class="cover-page-button">Proceed to Form</button>
         </div>
@@ -134,6 +152,7 @@
             <button class="tab-button" data-category="Dairy">Dairy</button>
             <button class="tab-button" data-category="Halal Meat">Halal Meat</button>
             <button class="tab-button" data-category="Hygiene">Hygiene</button>
+            <button class="tab-button" data-category="LPO Dashboard">LPO Dashboard</button> <!-- New tab -->
         </div>
 
         <!-- Material Items List -->
@@ -158,6 +177,17 @@
             <button id="submit-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline text-lg">
                 Submit Order
             </button>
+        </div>
+    </div>
+
+    <!-- LPO Dashboard Container (Initially Hidden) -->
+    <div id="lpo-dashboard-container" class="lpo-dashboard-container hidden">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">LPO Generation Dashboard</h1>
+        <p class="text-gray-600 mb-4">Review pending orders and generate Local Purchase Orders.</p>
+
+        <div id="pending-orders-list" class="mt-6">
+            <!-- Pending orders will be loaded here -->
+            <p id="no-pending-orders" class="text-gray-500 italic hidden">No pending orders to process.</p>
         </div>
     </div>
 
@@ -329,6 +359,7 @@
         const userNameInput = document.getElementById('user-name-input');
         const proceedButton = document.getElementById('proceed-button');
         const mainFormContainer = document.getElementById('main-form-container');
+        const lpoDashboardContainer = document.getElementById('lpo-dashboard-container'); // New LPO dashboard container
         const searchBar = document.getElementById('search-bar'); // New search bar element
 
         const itemsListDiv = document.getElementById('items-list');
@@ -338,6 +369,8 @@
         const submitButton = document.getElementById('submit-button');
         const clearButton = document.getElementById('clear-button');
         const tabButtons = document.querySelectorAll('.tab-button');
+        const pendingOrdersListDiv = document.getElementById('pending-orders-list'); // New element for pending orders
+        const noPendingOrdersMsg = document.getElementById('no-pending-orders'); // New element
 
         let currentActiveCategory = 'All'; // Track active category for filtering
         let currentSearchQuery = ''; // Track search query
@@ -350,9 +383,19 @@
                 // Add 'active' class to the clicked button
                 button.classList.add('active');
                 currentActiveCategory = button.dataset.category;
-                searchBar.value = ''; // Clear search bar when category changes
-                currentSearchQuery = ''; // Reset search query
-                renderItems(); // Re-render items based on the new category
+
+                // Hide/show containers based on active tab
+                if (currentActiveCategory === 'LPO Dashboard') {
+                    mainFormContainer.classList.add('hidden');
+                    lpoDashboardContainer.classList.remove('hidden');
+                    loadPendingOrders(); // Load orders when LPO Dashboard is active
+                } else {
+                    mainFormContainer.classList.remove('hidden');
+                    lpoDashboardContainer.classList.add('hidden');
+                    searchBar.value = ''; // Clear search bar when category changes
+                    currentSearchQuery = ''; // Reset search query
+                    renderItems(); // Re-render items for the main form
+                }
             });
         });
 
@@ -527,6 +570,71 @@
             updateOrderSummary(); // Ensure summary is updated after clearing
             renderItems(); // Re-render items to show all after clearing search
         }
+
+        /**
+         * Fetches and displays pending orders in the LPO Dashboard.
+         */
+        async function loadPendingOrders() {
+            pendingOrdersListDiv.innerHTML = '<p class="text-center text-gray-500">Loading pending orders...</p>';
+            noPendingOrdersMsg.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=getPendingOrders`, {
+                    method: 'GET', // Using GET for fetching data
+                    mode: 'no-cors',
+                    cache: 'no-cache'
+                });
+
+                // Due to no-cors, we can't directly read the response.
+                // We'll trust the Apps Script to return valid JSON, and handle it
+                // by assuming success and then needing a way to get the data.
+                // For 'no-cors', the actual data needs to be returned via a different mechanism
+                // or we need to switch to a 'cors' setup if possible (which Apps Script doesn't natively support for JSON output).
+
+                // For now, we'll make a direct call to the Apps Script function for simplicity in testing.
+                // In a real 'no-cors' scenario, you'd typically redirect or use a different endpoint.
+                // For this demonstration, we'll simulate the data fetching.
+
+                // A more robust solution for fetching data with no-cors would involve the Apps Script
+                // returning HTML Service content or a redirect, or using a proxy.
+                // For now, let's assume the Apps Script 'getPendingOrders' function will be called directly
+                // in a way that provides data, or we'll adjust the fetch to a different method if needed.
+
+                // For the purpose of demonstration, we'll simulate data.
+                // In a real scenario, the Apps Script getPendingOrders would return data directly.
+                const mockResponse = {
+                    success: true,
+                    data: [
+                        { "Date": "07/15/2025", "Time": "10:30:00", "Item Name": "Pizza box 9x9", "Quantity": 5, "Unit": "ctn", "Submitted By": "John Doe", "LPO ID": "" },
+                        { "Date": "07/15/2025", "Time": "10:45:00", "Item Name": "Beef Burger", "Quantity": 10, "Unit": "ctn", "Submitted By": "Jane Smith", "LPO ID": "" },
+                        { "Date": "07/15/2025", "Time": "11:00:00", "Item Name": "Aluminum Foil", "Quantity": 2, "Unit": "ctn", "Submitted By": "John Doe", "LPO ID": "" }
+                    ]
+                };
+
+
+                if (mockResponse.success && mockResponse.data.length > 0) {
+                    pendingOrdersListDiv.innerHTML = ''; // Clear loading message
+                    mockResponse.data.forEach(order => {
+                        const orderCard = document.createElement('div');
+                        orderCard.className = 'order-card';
+                        orderCard.innerHTML = `
+                            <p class="font-semibold text-lg">${order['Item Name']} - Qty: ${order.Quantity} ${order.Unit}</p>
+                            <p class="text-gray-600 text-sm">Ordered by: ${order['Submitted By']} on ${order.Date} at ${order.Time}</p>
+                            <button class="mt-3 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Generate LPO</button>
+                        `;
+                        pendingOrdersListDiv.appendChild(orderCard);
+                    });
+                } else {
+                    noPendingOrdersMsg.classList.remove('hidden');
+                    pendingOrdersListDiv.innerHTML = ''; // Clear loading message
+                }
+
+            } catch (error) {
+                console.error('Error loading pending orders:', error);
+                pendingOrdersListDiv.innerHTML = '<p class="text-center text-red-500">Failed to load orders. Please try again.</p>';
+            }
+        }
+
 
         // Cover page logic
         proceedButton.addEventListener('click', () => {
