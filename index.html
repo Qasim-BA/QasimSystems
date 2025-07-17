@@ -36,32 +36,6 @@
             transform: translateY(-3px);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
         }
-        /* Styling for the tab buttons */
-        .tab-button {
-            padding: 10px 15px;
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            background-color: #e2e8f0; /* bg-gray-200 */
-            color: #4a5568; /* text-gray-700 */
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-            white-space: nowrap; /* Prevent wrapping */
-        }
-        .tab-button.active {
-            background-color: #ffffff;
-            color: #3182ce; /* text-blue-600 */
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-            z-index: 10;
-        }
-        .tab-buttons-container {
-            overflow-x: auto; /* Allow horizontal scrolling for many tabs */
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-            scrollbar-width: none; /* Hide scrollbar for Firefox */
-            -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
-        }
-        .tab-buttons-container::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for Chrome, Safari, Opera */
-        }
         /* Cover page styling */
         .cover-page-container {
             display: flex;
@@ -104,44 +78,6 @@
         .cover-page-button:hover {
             background-color: #2563eb; /* bg-blue-600 */
         }
-        /* Styling for LPO Dashboard */
-        .lpo-dashboard-container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-        .order-card {
-            background-color: #f8fafc; /* bg-gray-50 */
-            border: 1px solid #e2e8f0; /* border-gray-200 */
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .order-card input[type="checkbox"] {
-            min-width: 20px; /* Ensure checkbox is not too small */
-            min-height: 20px;
-        }
-        .lpo-pdf-link {
-            display: inline-block;
-            background-color: #10b981; /* bg-green-500 */
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            text-decoration: none;
-            margin-top: 10px;
-            transition: background-color 0.3s ease;
-        }
-        .lpo-pdf-link:hover {
-            background-color: #059669; /* bg-green-600 */
-        }
     </style>
 </head>
 <body>
@@ -164,63 +100,34 @@
             <input type="text" id="search-bar" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Search for materials...">
         </div>
 
-        <!-- Tabs for Categories -->
-        <div class="tab-buttons-container flex border-b border-gray-200 mb-6 -mx-3 px-3">
-            <button class="tab-button active" data-category="Order Form">Order Form</button>
-            <button class="tab-button" data-category="LPO Dashboard">LPO Dashboard</button> <!-- New tab -->
+        <!-- Material Items List -->
+        <div id="items-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <!-- Items will be rendered here by JavaScript -->
         </div>
 
-        <!-- Order Form Content -->
-        <div id="order-form-content" class="">
-            <!-- Material Items List -->
-            <div id="items-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <!-- Items will be rendered here by JavaScript -->
-            </div>
-
-            <!-- Order Summary Section -->
-            <div id="order-summary-div" class="hidden bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
-                <h2 class="text-xl font-semibold text-blue-800 mb-3">Order Summary</h2>
-                <ul id="summary-list" class="list-disc list-inside text-blue-700">
-                    <!-- Summary items will be added here -->
-                </ul>
-                <p id="no-items-selected-msg" class="text-blue-700 hidden">No items selected yet.</p>
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex justify-between">
-                <button id="clear-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Clear Order
-                </button>
-                <button id="submit-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline text-lg">
-                    Submit Order
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- LPO Dashboard Container (Initially Hidden) -->
-    <div id="lpo-dashboard-container" class="lpo-dashboard-container hidden">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">LPO Generation Dashboard</h1>
-        <p class="text-gray-600 mb-4">Select pending orders to generate Local Purchase Orders.</p>
-
-        <div id="pending-orders-list" class="mt-6">
-            <!-- Pending orders will be loaded here -->
-            <p id="loading-orders-msg" class="text-center text-gray-500">Loading pending orders...</p>
-            <p id="no-pending-orders" class="text-gray-500 italic hidden">No pending orders to process.</p>
+        <!-- Order Summary Section -->
+        <div id="order-summary-div" class="hidden bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
+            <h2 class="text-xl font-semibold text-blue-800 mb-3">Order Summary</h2>
+            <ul id="summary-list" class="list-disc list-inside text-blue-700">
+                <!-- Summary items will be added here -->
+            </ul>
+            <p id="no-items-selected-msg" class="text-blue-700 hidden">No items selected yet.</p>
         </div>
 
-        <button id="generate-lpo-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out mt-8 hidden">
-            Generate Selected LPOs
-        </button>
-
-        <div id="lpo-download-links" class="mt-6">
-            <!-- Download links for generated PDFs will appear here -->
+        <!-- Buttons -->
+        <div class="flex justify-between">
+            <button id="clear-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Clear Order
+            </button>
+            <button id="submit-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline text-lg">
+                Submit Order
+            </button>
         </div>
     </div>
 
     <script>
-        // IMPORTANT: This URL has been updated to the one you provided.
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby9ojEAAvdXEFxRJS1_2Fgqg2t3innz8qfsUKKR4aViD7WIcwcyeWiwhPKRXxm2AMfq/exec';
+        // *** THIS URL IS PRE-FILLED WITH THE ONE YOU PROVIDED ***
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec'; 
 
         // Material Items Data (UPDATED WITH UNITS)
         const items = [
@@ -386,8 +293,7 @@
         const userNameInput = document.getElementById('user-name-input');
         const proceedButton = document.getElementById('proceed-button');
         const mainFormContainer = document.getElementById('main-form-container');
-        const lpoDashboardContainer = document.getElementById('lpo-dashboard-container'); // New LPO dashboard container
-        const searchBar = document.getElementById('search-bar'); // New search bar element
+        const searchBar = document.getElementById('search-bar'); 
 
         const itemsListDiv = document.getElementById('items-list');
         const orderSummaryDiv = document.getElementById('order-summary-div');
@@ -395,41 +301,8 @@
         const noItemsSelectedMsg = document.getElementById('no-items-selected-msg');
         const submitButton = document.getElementById('submit-button');
         const clearButton = document.getElementById('clear-button');
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const pendingOrdersListDiv = document.getElementById('pending-orders-list'); // New element for pending orders
-        const noPendingOrdersMsg = document.getElementById('no-pending-orders'); // New element
-        const loadingOrdersMsg = document.getElementById('loading-orders-msg'); // New element
-        const generateLPOButton = document.getElementById('generate-lpo-button'); // New button
-        const lpoDownloadLinksDiv = document.getElementById('lpo-download-links'); // New div for links
-
-        let currentActiveCategory = 'Order Form'; // Default to Order Form tab
+        
         let currentSearchQuery = ''; // Track search query
-
-        // Event listener for tab buttons
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove 'active' class from all buttons
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                // Add 'active' class to the clicked button
-                button.classList.add('active');
-                currentActiveCategory = button.dataset.category;
-
-                // Hide/show containers based on active tab
-                if (currentActiveCategory === 'LPO Dashboard') {
-                    document.getElementById('order-form-content').classList.add('hidden');
-                    lpoDashboardContainer.classList.remove('hidden');
-                    searchBar.classList.add('hidden'); // Hide search bar on LPO Dashboard
-                    loadPendingOrders(); // Load orders when LPO Dashboard is active
-                } else {
-                    document.getElementById('order-form-content').classList.remove('hidden');
-                    lpoDashboardContainer.classList.add('hidden');
-                    searchBar.classList.remove('hidden'); // Show search bar on Order Form
-                    searchBar.value = ''; // Clear search bar when category changes
-                    currentSearchQuery = ''; // Reset search query
-                    renderItems(); // Re-render items for the main form
-                }
-            });
-        });
 
         // Event listener for search bar
         searchBar.addEventListener('input', (event) => {
@@ -439,21 +312,15 @@
 
         clearButton.addEventListener('click', clearForm);
         submitButton.addEventListener('click', handleSubmitOrder);
-        generateLPOButton.addEventListener('click', handleGenerateLPO); // New event listener
-
+        
         /**
-         * Renders material items based on the active category and search query.
+         * Renders material items based on the search query.
          */
         function renderItems() {
             itemsListDiv.innerHTML = ''; // Clear current items
 
             const filteredItems = items.filter(item => {
-                const matchesSearch = item.name.toLowerCase().includes(currentSearchQuery);
-                // For the main form, we don't filter by category tabs, only search.
-                // If you want category tabs back for the main form, uncomment the line below
-                // and adjust the HTML tab buttons.
-                // const matchesCategory = currentActiveCategory === 'All' || item.category === currentActiveCategory;
-                return matchesSearch; // && matchesCategory;
+                return item.name.toLowerCase().includes(currentSearchQuery);
             });
 
             filteredItems.forEach(item => {
@@ -513,7 +380,7 @@
                         id: item.id,
                         name: item.name,
                         quantity: quantity,
-                        unit: item.unit // Unit is now directly available from the items array
+                        unit: item.unit 
                     });
                 }
             });
@@ -537,7 +404,6 @@
                 orderSummaryDiv.classList.remove('hidden'); // Show the whole summary div
                 order.forEach(item => {
                     const listItem = document.createElement('li');
-                    // Display item with unit in summary
                     listItem.textContent = `${item.name}: ${item.quantity} ${item.unit}`;
                     summaryList.appendChild(listItem);
                 });
@@ -549,32 +415,39 @@
          */
         async function handleSubmitOrder() {
             const order = getSelectedOrderItems();
-            const submittedBy = sessionStorage.getItem('userName') || 'Anonymous'; // Get name from session storage
+            const submittedBy = sessionStorage.getItem('userName') || 'Anonymous'; 
 
             if (order.length === 0) {
                 alert('Please select at least one item and enter a quantity greater than zero.');
                 return;
             }
 
+            console.log('Attempting to submit order...');
+            console.log('WEB_APP_URL:', WEB_APP_URL); // Log the URL being used
+
             const payload = {
-                action: 'submitOrder', // Explicit action for POST request
+                action: 'submitOrder', 
                 orders: order,
                 submittedBy: submittedBy
             };
 
-            submitButton.disabled = true; // Disable button to prevent double submission
+            submitButton.disabled = true; 
             submitButton.textContent = 'Submitting...';
 
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'cors', // Changed to 'cors' to read response
+                    mode: 'cors', 
                     cache: 'no-cache',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(payload)
                 });
+
+                console.log('Fetch response received.');
+                console.log('Response status:', response.status);
+                console.log('Response status text:', response.statusText);
 
                 if (!response.ok) {
                     const errorText = await response.text();
@@ -584,9 +457,11 @@
                 }
 
                 const result = await response.json();
+                console.log('Apps Script response:', result);
+
                 if (result.success) {
                     alert('Order submitted successfully! The sheet should be updated shortly.');
-                    clearForm(); // Clear the form after successful submission
+                    clearForm(); 
                 } else {
                     console.error('Apps Script reported an error:', result.message);
                     alert(`Failed to submit order: ${result.message}.`);
@@ -597,7 +472,7 @@
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Submit Order';
-                updateOrderSummary(); // Update summary in case items were cleared
+                updateOrderSummary(); 
             }
         }
 
@@ -614,176 +489,13 @@
                 quantityInput.classList.remove('bg-white');
                 quantityInput.classList.add('bg-gray-100');
             });
-            orderSummaryDiv.classList.add('hidden'); // Hide summary after clearing
+            orderSummaryDiv.classList.add('hidden'); 
             searchBar.value = ''; // Clear search bar
             currentSearchQuery = ''; // Reset search query
-            updateOrderSummary(); // Ensure summary is updated after clearing
+            updateOrderSummary(); 
             renderItems(); // Re-render items to show all after clearing search
         }
-
-        /**
-         * Fetches and displays pending orders in the LPO Dashboard.
-         */
-        async function loadPendingOrders() {
-            pendingOrdersListDiv.innerHTML = ''; // Clear previous orders
-            loadingOrdersMsg.classList.remove('hidden');
-            noPendingOrdersMsg.classList.add('hidden');
-            generateLPOButton.classList.add('hidden'); // Hide button until orders are loaded
-            lpoDownloadLinksDiv.innerHTML = ''; // Clear previous download links
-
-            try {
-                const response = await fetch(`${WEB_APP_URL}?action=getPendingOrders`, {
-                    method: 'GET', // Use GET for fetching data
-                    mode: 'cors' // Using CORS mode to read JSON response directly
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server error loading pending orders:', response.status, response.statusText, errorText);
-                    throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
-                }
-
-                const result = await response.json();
-
-                if (result.success && result.data.length > 0) {
-                    loadingOrdersMsg.classList.add('hidden');
-                    pendingOrdersListDiv.innerHTML = ''; // Clear loading message
-
-                    // Group orders by Submitted By for better readability
-                    const ordersBySubmitter = new Map();
-                    result.data.forEach(order => {
-                        const submitter = order['Submitted By'] || 'Unknown';
-                        if (!ordersBySubmitter.has(submitter)) {
-                            ordersBySubmitter.set(submitter, []);
-                        }
-                        ordersBySubmitter.get(submitter).push(order);
-                    });
-
-                    ordersBySubmitter.forEach((orders, submitter) => {
-                        const submitterGroupDiv = document.createElement('div');
-                        submitterGroupDiv.className = 'mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50';
-                        submitterGroupDiv.innerHTML = `<h3 class="text-xl font-bold mb-3 text-gray-700">Orders by ${submitter}</h3>`;
-
-                        orders.forEach(order => {
-                            const orderCard = document.createElement('div');
-                            orderCard.className = 'order-card';
-                            orderCard.innerHTML = `
-                                <input type="checkbox" class="pending-order-checkbox h-5 w-5 text-blue-600" data-original-row-index="${order.originalRowIndex}">
-                                <div class="flex-grow">
-                                    <p class="font-semibold text-lg">${order['Item Name']} - Qty: ${order.Quantity} ${order.Unit}</p>
-                                    <p class="text-gray-600 text-sm">Ordered on ${order.Date} at ${order.Time}</p>
-                                </div>
-                            `;
-                            submitterGroupDiv.appendChild(orderCard);
-                        });
-                        pendingOrdersListDiv.appendChild(submitterGroupDiv);
-                    });
-
-                    generateLPOButton.classList.remove('hidden'); // Show generate button
-                } else {
-                    loadingOrdersMsg.classList.add('hidden');
-                    noPendingOrdersMsg.classList.remove('hidden');
-                    generateLPOButton.classList.add('hidden');
-                }
-
-            } catch (error) {
-                console.error('Error loading pending orders:', error);
-                loadingOrdersMsg.classList.add('hidden');
-                pendingOrdersListDiv.innerHTML = '<p class="text-center text-red-500">Failed to load orders. Please try again.</p>';
-                generateLPOButton.classList.add('hidden');
-            }
-        }
-
-        /**
-         * Handles the generation of LPOs for selected pending orders.
-         */
-        async function handleGenerateLPO() {
-            const selectedCheckboxes = document.querySelectorAll('.pending-order-checkbox:checked');
-            if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one pending order to generate an LPO.');
-                return;
-            }
-
-            const selectedOrderRowIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.originalRowIndex));
-
-            // Fetch all pending orders again to get their full details
-            // This is a safety measure to ensure we send full data to Apps Script
-            // and not just indices.
-            const response = await fetch(`${WEB_APP_URL}?action=getPendingOrders`, {
-                method: 'GET',
-                mode: 'cors'
-            });
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Server error fetching pending orders for LPO generation:', response.status, response.statusText, errorText);
-                alert('Failed to fetch pending orders for LPO generation. Please try again.');
-                return;
-            }
-            const result = await response.json();
-            if (!result.success || result.data.length === 0) {
-                alert('No pending orders found to process.');
-                return;
-            }
-
-            const ordersToProcess = result.data.filter(order =>
-                selectedOrderRowIndices.includes(order.originalRowIndex)
-            );
-
-            if (ordersToProcess.length === 0) {
-                alert('Selected orders could not be found for processing. Please refresh and try again.');
-                return;
-            }
-
-            generateLPOButton.disabled = true;
-            generateLPOButton.textContent = 'Generating LPOs...';
-            lpoDownloadLinksDiv.innerHTML = '<p class="text-center text-gray-500">Generating PDFs, please wait...</p>';
-
-            try {
-                const generateResponse = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'cors', // Use CORS to get direct JSON response with PDF URLs
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ action: 'generateLPOsAndPDFs', selectedOrders: ordersToProcess })
-                });
-
-                if (!generateResponse.ok) {
-                    const errorText = await generateResponse.text();
-                    console.error('Server error generating LPOs:', generateResponse.status, generateResponse.statusText, errorText);
-                    throw new Error(`HTTP error! status: ${generateResponse.status} ${generateResponse.statusText}`);
-                }
-
-                const generateResult = await generateResponse.json();
-
-                if (generateResult.success && generateResult.pdfs && generateResult.pdfs.length > 0) {
-                    lpoDownloadLinksDiv.innerHTML = '<h3 class="text-xl font-semibold text-green-700 mb-3">Generated LPOs:</h3>';
-                    generateResult.pdfs.forEach(pdf => {
-                        const link = document.createElement('a');
-                        link.href = pdf.url;
-                        link.target = '_blank';
-                        link.className = 'lpo-pdf-link mr-3 mb-2';
-                        link.textContent = `Download LPO ${pdf.lpoId} for ${pdf.vendor}`;
-                        lpoDownloadLinksDiv.appendChild(link);
-                    });
-                    alert('LPOs generated and ready for download!');
-                    loadPendingOrders(); // Refresh pending orders list
-                } else {
-                    lpoDownloadLinksDiv.innerHTML = '<p class="text-center text-red-500">No LPOs were generated.</p>';
-                    alert('Failed to generate LPOs or no PDFs returned.');
-                }
-
-            } catch (error) {
-                console.error('Error generating LPOs:', error);
-                lpoDownloadLinksDiv.innerHTML = '<p class="text-center text-red-500">Error generating LPOs. Check console for details.</p>';
-                alert('An error occurred during LPO generation. Please try again.');
-            } finally {
-                generateLPOButton.disabled = false;
-                generateLPOButton.textContent = 'Generate Selected LPOs';
-            }
-        }
-
-
+        
         // Cover page logic
         proceedButton.addEventListener('click', () => {
             const userName = userNameInput.value.trim();
@@ -791,7 +503,7 @@
                 sessionStorage.setItem('userName', userName);
                 coverPageContainer.classList.add('hidden');
                 mainFormContainer.classList.remove('hidden');
-                renderItems(); // Render items after showing the main form
+                renderItems(); 
             } else {
                 alert('Please enter your name to proceed.');
             }
@@ -802,9 +514,7 @@
             if (sessionStorage.getItem('userName')) {
                 mainFormContainer.classList.remove('hidden');
                 coverPageContainer.classList.add('hidden');
-                // Set the correct active tab on load
-                const orderFormTab = document.querySelector('.tab-button[data-category="Order Form"]');
-                if (orderFormTab) orderFormTab.click(); // Simulate click to activate and render
+                renderItems();
             } else {
                 coverPageContainer.classList.remove('hidden');
                 mainFormContainer.classList.add('hidden');
