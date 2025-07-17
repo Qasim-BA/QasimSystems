@@ -126,7 +126,8 @@
     </div>
 
     <script>
-        // *** THIS URL IS PRE-FILLED WITH THE ONE YOU PROVIDED ***
+        // *** IMPORTANT: REPLACE THIS PLACEHOLDER WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
+        // Example: const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz.../exec';
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec'; 
 
         // Material Items Data (UPDATED WITH UNITS)
@@ -437,7 +438,7 @@
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'cors', 
+                    mode: 'no-cors', // *** IMPORTANT: Using 'no-cors' for GitHub Pages ***
                     cache: 'no-cache',
                     headers: {
                         'Content-Type': 'application/json',
@@ -445,27 +446,13 @@
                     body: JSON.stringify(payload)
                 });
 
-                console.log('Fetch response received.');
-                console.log('Response status:', response.status);
-                console.log('Response status text:', response.statusText);
+                // In 'no-cors' mode, response.ok will always be true and status will be 0.
+                // We cannot read the response body directly.
+                // We rely on the script executing successfully on the backend.
+                console.log('Fetch request sent in no-cors mode. Cannot read response directly.');
+                alert('Order submitted. Please check the Google Sheet to confirm.');
+                clearForm(); 
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server error submitting order:', response.status, response.statusText, errorText);
-                    alert(`Error submitting order: ${response.status} ${response.statusText}. Please try again.`);
-                    return;
-                }
-
-                const result = await response.json();
-                console.log('Apps Script response:', result);
-
-                if (result.success) {
-                    alert('Order submitted successfully! The sheet should be updated shortly.');
-                    clearForm(); 
-                } else {
-                    console.error('Apps Script reported an error:', result.message);
-                    alert(`Failed to submit order: ${result.message}.`);
-                }
             } catch (error) {
                 console.error('Network error submitting order:', error);
                 alert('There was a network error submitting your order. Please check your internet connection and try again.');
