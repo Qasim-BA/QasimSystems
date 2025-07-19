@@ -36,8 +36,8 @@
             transform: translateY(-3px);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
         }
-        /* Cover page styling */
-        .cover-page-container {
+        /* Login/Cover page styling */
+        .login-page-container { /* Renamed from cover-page-container */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,7 +47,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        .cover-page-card {
+        .login-page-card { /* Renamed from cover-page-card */
             background-color: #ffffff;
             padding: 40px;
             border-radius: 15px;
@@ -56,7 +56,7 @@
             width: 100%;
             text-align: center;
         }
-        .cover-page-input {
+        .login-input { /* Renamed from cover-page-input */
             padding: 12px 15px;
             border: 1px solid #cbd5e0; /* border-gray-300 */
             border-radius: 8px;
@@ -65,7 +65,7 @@
             margin-bottom: 20px;
             box-sizing: border-box;
         }
-        .cover-page-button {
+        .login-button { /* Renamed from cover-page-button */
             background-color: #3b82f6; /* bg-blue-500 */
             color: white;
             padding: 12px 25px;
@@ -75,25 +75,45 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-        .cover-page-button:hover {
+        .login-button:hover {
             background-color: #2563eb; /* bg-blue-600 */
+        }
+        .logout-button {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .logout-button:hover {
+            background-color: #dc2626; /* red-600 */
         }
     </style>
 </head>
 <body>
-    <!-- Cover Page -->
-    <div id="cover-page-container" class="cover-page-container hidden">
-        <div class="cover-page-card">
-            <h1 class="text-4xl font-bold text-gray-800 mb-6">Welcome!</h1>
-            <p class="text-gray-600 text-lg mb-8">Please enter your name to proceed.</p>
-            <input type="text" id="user-name-input" class="cover-page-input" placeholder="Your Name" required>
-            <button id="proceed-button" class="cover-page-button">Proceed to Form</button>
+    <!-- Login Page -->
+    <div id="login-page-container" class="login-page-container hidden">
+        <div class="login-page-card">
+            <h1 class="text-4xl font-bold text-gray-800 mb-6">Welcome! Please Log In</h1>
+            <input type="text" id="login-username-input" class="login-input" placeholder="Username" required>
+            <input type="password" id="login-password-input" class="login-input" placeholder="Password" required>
+            <button id="login-button" class="login-button">Log In</button>
+            <p id="login-message" class="text-red-500 mt-4 hidden"></p>
         </div>
     </div>
 
     <!-- Main Form Container -->
     <div id="main-form-container" class="form-container hidden">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Material Purchase Order</h1>
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Material Purchase Order</h1>
+            <div class="text-right">
+                <p class="text-gray-600 text-sm">Logged in as: <span id="display-username" class="font-semibold"></span> (<span id="display-role" class="font-semibold"></span>)</p>
+                <button id="logout-button" class="logout-button mt-2">Logout</button>
+            </div>
+        </div>
 
         <!-- Search Bar -->
         <div class="mb-6">
@@ -129,6 +149,20 @@
         // *** IMPORTANT: REPLACE THIS PLACEHOLDER WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
         // Example: const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz.../exec';
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec'; 
+
+        // Client-side check for placeholder URL
+        if (WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec') {
+            console.error("ERROR: WEB_APP_URL is still the placeholder. Please replace 'YOUR_NEW_APPS_SCRIPT_WEB_APP_URL_HERE' with your actual Google Apps Script Web App URL from its latest deployment.");
+            alert("Configuration Error: Please update the WEB_APP_URL in the HTML script. Check the console for details.");
+            // Prevent further execution that relies on the URL if it's a placeholder
+            // This will stop login/submit attempts until fixed.
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('login-button').disabled = true;
+                document.getElementById('submit-button').disabled = true;
+                document.getElementById('login-message').textContent = "Please update WEB_APP_URL in the code.";
+                document.getElementById('login-message').classList.remove('hidden');
+            });
+        }
 
         // Material Items Data (UPDATED WITH UNITS)
         const items = [
@@ -290,22 +324,29 @@
             { id: 156, name: "Zatter", category: "General Food", unit: "bags" }
         ];
 
-        const coverPageContainer = document.getElementById('cover-page-container');
-        const userNameInput = document.getElementById('user-name-input');
-        const proceedButton = document.getElementById('proceed-button');
+        // Login Page Elements
+        const loginPageContainer = document.getElementById('login-page-container');
+        const loginUsernameInput = document.getElementById('login-username-input');
+        const loginPasswordInput = document.getElementById('login-password-input');
+        const loginButton = document.getElementById('login-button');
+        const loginMessage = document.getElementById('login-message');
+
+        // Main Form Elements
         const mainFormContainer = document.getElementById('main-form-container');
         const searchBar = document.getElementById('search-bar'); 
-
         const itemsListDiv = document.getElementById('items-list');
         const orderSummaryDiv = document.getElementById('order-summary-div');
         const summaryList = document.getElementById('summary-list');
         const noItemsSelectedMsg = document.getElementById('no-items-selected-msg');
         const submitButton = document.getElementById('submit-button');
         const clearButton = document.getElementById('clear-button');
+        const displayUsername = document.getElementById('display-username');
+        const displayRole = document.getElementById('display-role');
+        const logoutButton = document.getElementById('logout-button');
         
         let currentSearchQuery = ''; // Track search query
 
-        // Event listener for search bar
+        // Event Listeners
         searchBar.addEventListener('input', (event) => {
             currentSearchQuery = event.target.value.toLowerCase();
             renderItems(); // Re-render items based on the search query
@@ -313,7 +354,9 @@
 
         clearButton.addEventListener('click', clearForm);
         submitButton.addEventListener('click', handleSubmitOrder);
-        
+        loginButton.addEventListener('click', handleLogin);
+        logoutButton.addEventListener('click', handleLogout);
+
         /**
          * Renders material items based on the search query.
          */
@@ -412,15 +455,93 @@
         }
 
         /**
+         * Handles the login attempt.
+         */
+        async function handleLogin() {
+            // Check if WEB_APP_URL is still the placeholder before attempting fetch
+            if (WEB_APP_URL === 'YOUR_NEW_APPS_SCRIPT_WEB_APP_URL_HERE') {
+                loginMessage.textContent = "Configuration Error: Please update WEB_APP_URL in the code.";
+                loginMessage.classList.remove('hidden');
+                console.error("Attempted login with placeholder WEB_APP_URL.");
+                return; // Stop execution
+            }
+
+            const username = loginUsernameInput.value.trim();
+            const password = loginPasswordInput.value.trim();
+
+            if (!username || !password) {
+                loginMessage.textContent = 'Please enter both username and password.';
+                loginMessage.classList.remove('hidden');
+                return;
+            }
+
+            loginButton.disabled = true;
+            loginButton.textContent = 'Logging In...';
+            loginMessage.classList.add('hidden'); // Hide previous messages
+
+            const payload = {
+                action: 'login',
+                username: username,
+                password: password
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'cors', // Use 'cors' mode to read the JSON response
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error during login:', response.status, response.statusText, errorText);
+                    loginMessage.textContent = `Login error: ${response.status} ${response.statusText}. Please try again.`;
+                    loginMessage.classList.remove('hidden');
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('Login Apps Script response:', result);
+
+                if (result.success) {
+                    sessionStorage.setItem('loggedInUser', result.user.username);
+                    sessionStorage.setItem('loggedInRole', result.user.role);
+                    showMainForm();
+                } else {
+                    loginMessage.textContent = result.message || 'Login failed. Please check your credentials.';
+                    loginMessage.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Network error during login:', error);
+                loginMessage.textContent = 'Network error during login. Please check your internet connection.';
+                loginMessage.classList.remove('hidden');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Log In';
+            }
+        }
+
+        /**
          * Handles the submission of the order to the Google Apps Script.
          */
         async function handleSubmitOrder() {
             const order = getSelectedOrderItems();
-            const submittedBy = sessionStorage.getItem('userName') || 'Anonymous'; 
+            const submittedBy = sessionStorage.getItem('loggedInUser') || 'Anonymous'; 
 
             if (order.length === 0) {
                 alert('Please select at least one item and enter a quantity greater than zero.');
                 return;
+            }
+
+            // Check if WEB_APP_URL is still the placeholder
+            if (WEB_APP_URL === 'YOUR_NEW_APPS_SCRIPT_WEB_APP_URL_HERE') {
+                alert("Configuration Error: Please update the WEB_APP_URL in the HTML script with your Apps Script deployment URL.");
+                console.error("Attempted to submit with placeholder WEB_APP_URL.");
+                return; // Stop execution if URL is not set
             }
 
             console.log('Attempting to submit order...');
@@ -438,7 +559,7 @@
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // *** IMPORTANT: Using 'no-cors' for GitHub Pages ***
+                    mode: 'cors', // Changed to 'cors' to read success/failure messages
                     cache: 'no-cache',
                     headers: {
                         'Content-Type': 'application/json',
@@ -446,13 +567,23 @@
                     body: JSON.stringify(payload)
                 });
 
-                // In 'no-cors' mode, response.ok will always be true and status will be 0.
-                // We cannot read the response body directly.
-                // We rely on the script executing successfully on the backend.
-                console.log('Fetch request sent in no-cors mode. Cannot read response directly.');
-                alert('Order submitted. Please check the Google Sheet to confirm.');
-                clearForm(); 
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error submitting order:', response.status, response.statusText, errorText);
+                    alert(`Error submitting order: ${response.status} ${response.statusText}. Please try again.`);
+                    return;
+                }
 
+                const result = await response.json();
+                console.log('Apps Script response:', result);
+
+                if (result.success) {
+                    alert('Order submitted successfully! The sheet should be updated shortly.');
+                    clearForm(); 
+                } else {
+                    console.error('Apps Script reported an error:', result.message);
+                    alert(`Failed to submit order: ${result.message}.`);
+                }
             } catch (error) {
                 console.error('Network error submitting order:', error);
                 alert('There was a network error submitting your order. Please check your internet connection and try again.');
@@ -482,29 +613,51 @@
             updateOrderSummary(); 
             renderItems(); // Re-render items to show all after clearing search
         }
-        
-        // Cover page logic
-        proceedButton.addEventListener('click', () => {
-            const userName = userNameInput.value.trim();
-            if (userName) {
-                sessionStorage.setItem('userName', userName);
-                coverPageContainer.classList.add('hidden');
-                mainFormContainer.classList.remove('hidden');
-                renderItems(); 
-            } else {
-                alert('Please enter your name to proceed.');
-            }
-        });
 
-        // Initial load check
-        window.onload = () => {
-            if (sessionStorage.getItem('userName')) {
+        /**
+         * Shows the main form and hides the login page.
+         */
+        function showMainForm() {
+            const username = sessionStorage.getItem('loggedInUser');
+            const role = sessionStorage.getItem('loggedInRole');
+            if (username && role) {
+                displayUsername.textContent = username;
+                displayRole.textContent = role;
+                loginPageContainer.classList.add('hidden');
                 mainFormContainer.classList.remove('hidden');
-                coverPageContainer.classList.add('hidden');
-                renderItems();
+                renderItems(); // Render items when form is shown
             } else {
-                coverPageContainer.classList.remove('hidden');
-                mainFormContainer.classList.add('hidden');
+                showLoginPage(); // Fallback to login if session data is missing
+            }
+        }
+
+        /**
+         * Shows the login page and hides the main form.
+         */
+        function showLoginPage() {
+            loginPageContainer.classList.remove('hidden');
+            mainFormContainer.classList.add('hidden');
+            loginUsernameInput.value = ''; // Clear inputs
+            loginPasswordInput.value = '';
+            loginMessage.classList.add('hidden'); // Hide messages
+        }
+
+        /**
+         * Handles user logout.
+         */
+        function handleLogout() {
+            sessionStorage.removeItem('loggedInUser');
+            sessionStorage.removeItem('loggedInRole');
+            alert('You have been logged out.'); // Simple alert for now
+            showLoginPage();
+        }
+
+        // Initial load check: Determine whether to show login or main form
+        window.onload = () => {
+            if (sessionStorage.getItem('loggedInUser') && sessionStorage.getItem('loggedInRole')) {
+                showMainForm();
+            } else {
+                showLoginPage();
             }
         };
     </script>
