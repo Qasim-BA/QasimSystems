@@ -148,21 +148,8 @@
     <script>
         // *** IMPORTANT: REPLACE THIS PLACEHOLDER WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
         // Example: const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz.../exec';
+        // You provided this URL: https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec'; 
-
-        // Client-side check for placeholder URL
-        if (WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec') {
-            console.error("ERROR: WEB_APP_URL is still the placeholder. Please replace 'YOUR_NEW_APPS_SCRIPT_WEB_APP_URL_HERE' with your actual Google Apps Script Web App URL from its latest deployment.");
-            alert("Configuration Error: Please update the WEB_APP_URL in the HTML script. Check the console for details.");
-            // Prevent further execution that relies on the URL if it's a placeholder
-            // This will stop login/submit attempts until fixed.
-            document.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('login-button').disabled = true;
-                document.getElementById('submit-button').disabled = true;
-                document.getElementById('login-message').textContent = "Please update WEB_APP_URL in the code.";
-                document.getElementById('login-message').classList.remove('hidden');
-            });
-        }
 
         // Material Items Data (UPDATED WITH UNITS)
         const items = [
@@ -458,13 +445,8 @@
          * Handles the login attempt.
          */
         async function handleLogin() {
-            // Check if WEB_APP_URL is still the placeholder before attempting fetch
-            if (WEB_APP_URL === 'YOUR_NEW_APPS_SCRIPT_WEB_APP_URL_HERE') {
-                loginMessage.textContent = "Configuration Error: Please update WEB_APP_URL in the code.";
-                loginMessage.classList.remove('hidden');
-                console.error("Attempted login with placeholder WEB_APP_URL.");
-                return; // Stop execution
-            }
+            // No longer checking against a specific URL, assuming the user has pasted their correct URL.
+            // If WEB_APP_URL is empty or invalid, the fetch will naturally fail.
 
             const username = loginUsernameInput.value.trim();
             const password = loginPasswordInput.value.trim();
@@ -510,7 +492,7 @@
                 if (result.success) {
                     sessionStorage.setItem('loggedInUser', result.user.username);
                     sessionStorage.setItem('loggedInRole', result.user.role);
-                    showMainForm();
+                    showMainForm(); // This should now correctly navigate
                 } else {
                     loginMessage.textContent = result.message || 'Login failed. Please check your credentials.';
                     loginMessage.classList.remove('hidden');
@@ -535,13 +517,6 @@
             if (order.length === 0) {
                 alert('Please select at least one item and enter a quantity greater than zero.');
                 return;
-            }
-
-            // Check if WEB_APP_URL is still the placeholder
-            if (WEB_APP_URL === 'YOUR_NEW_APPS_SCRIPT_WEB_APP_URL_HERE') {
-                alert("Configuration Error: Please update the WEB_APP_URL in the HTML script with your Apps Script deployment URL.");
-                console.error("Attempted to submit with placeholder WEB_APP_URL.");
-                return; // Stop execution if URL is not set
             }
 
             console.log('Attempting to submit order...');
@@ -627,7 +602,8 @@
                 mainFormContainer.classList.remove('hidden');
                 renderItems(); // Render items when form is shown
             } else {
-                showLoginPage(); // Fallback to login if session data is missing
+                // If for some reason session data is missing, redirect to login
+                showLoginPage(); 
             }
         }
 
