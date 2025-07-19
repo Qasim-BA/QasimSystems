@@ -1,641 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Material Purchase Form</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for Inter font and general body */
-        body {
-            font-family: "Inter", sans-serif;
-            background-color: #f0f2f5; /* Light gray background */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Align to start for better scrolling on smaller screens */
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Material Purchase Order</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec';
+
+    let displayUsername, displayRole, submitButton;
+
+    window.onload = () => {
+      displayUsername = document.getElementById('display-username');
+      displayRole = document.getElementById('display-role');
+      submitButton = document.getElementById('submit-button');
+
+      const user = sessionStorage.getItem('loggedInUser');
+      const role = sessionStorage.getItem('loggedInRole');
+
+      if (!user || !role) {
+        alert('You are not logged in. Redirecting to login...');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      displayUsername.textContent = user;
+      displayRole.textContent = role;
+
+      submitButton.addEventListener('click', submitOrder);
+    };
+
+    function submitOrder() {
+      const material = document.getElementById('material').value;
+      const quantity = document.getElementById('quantity').value;
+      const unit = document.getElementById('unit').value;
+
+      if (!material || !quantity || !unit) {
+        alert('Please fill all fields.');
+        return;
+      }
+
+      const order = [{
+        name: material,
+        quantity: parseInt(quantity),
+        unit: unit
+      }];
+
+      const submittedBy = sessionStorage.getItem('loggedInUser');
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submitOrder',
+          orders: order,
+          submittedBy: submittedBy
+        })
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          alert('Order submitted successfully!');
+          document.getElementById('material').value = '';
+          document.getElementById('quantity').value = '';
+          document.getElementById('unit').value = '';
+        } else {
+          alert('Error: ' + result.message);
         }
-        /* Ensure the main container is responsive and centered */
-        .form-container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-        .item-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        .item-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-        }
-        /* Login/Cover page styling */
-        .login-page-container { /* Renamed from cover-page-container */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f0f2f5;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .login-page-card { /* Renamed from cover-page-card */
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-        }
-        .login-input { /* Renamed from cover-page-input */
-            padding: 12px 15px;
-            border: 1px solid #cbd5e0; /* border-gray-300 */
-            border-radius: 8px;
-            width: 100%;
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-        .login-button { /* Renamed from cover-page-button */
-            background-color: #3b82f6; /* bg-blue-500 */
-            color: white;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .login-button:hover {
-            background-color: #2563eb; /* bg-blue-600 */
-        }
-        .logout-button {
-            background-color: #ef4444; /* red-500 */
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .logout-button:hover {
-            background-color: #dc2626; /* red-600 */
-        }
-    </style>
+      })
+      .catch(error => {
+        console.error('Error submitting order:', error);
+        alert('Network error submitting order.');
+      });
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    }
+  </script>
 </head>
-<body>
-    <!-- Login Page -->
-    <div id="login-page-container" class="login-page-container hidden">
-        <div class="login-page-card">
-            <h1 class="text-4xl font-bold text-gray-800 mb-6">Welcome! Please Log In</h1>
-            <input type="text" id="login-username-input" class="login-input" placeholder="Username" required>
-            <input type="password" id="login-password-input" class="login-input" placeholder="Password" required>
-            <button id="login-button" class="login-button">Log In</button>
-            <p id="login-message" class="text-red-500 mt-4 hidden"></p>
-        </div>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-xl">
+    <div class="flex justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">Material Purchase Order</h1>
+        <p class="text-sm text-gray-600">Logged in as <span id="display-username" class="font-semibold"></span> (<span id="display-role" class="font-semibold"></span>)</p>
+      </div>
+      <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
     </div>
 
-    <!-- Main Form Container -->
-    <div id="main-form-container" class="form-container hidden">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Material Purchase Order</h1>
-            <div class="text-right">
-                <p class="text-gray-600 text-sm">Logged in as: <span id="display-username" class="font-semibold"></span> (<span id="display-role" class="font-semibold"></span>)</p>
-                <button id="logout-button" class="logout-button mt-2">Logout</button>
-            </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="mb-6">
-            <input type="text" id="search-bar" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Search for materials...">
-        </div>
-
-        <!-- Material Items List -->
-        <div id="items-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <!-- Items will be rendered here by JavaScript -->
-        </div>
-
-        <!-- Order Summary Section -->
-        <div id="order-summary-div" class="hidden bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
-            <h2 class="text-xl font-semibold text-blue-800 mb-3">Order Summary</h2>
-            <ul id="summary-list" class="list-disc list-inside text-blue-700">
-                <!-- Summary items will be added here -->
-            </ul>
-            <p id="no-items-selected-msg" class="text-blue-700 hidden">No items selected yet.</p>
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex justify-between">
-            <button id="clear-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Clear Order
-            </button>
-            <button id="submit-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline text-lg">
-                Submit Order
-            </button>
-        </div>
+    <div class="space-y-4">
+      <input type="text" id="material" class="w-full p-3 border border-gray-300 rounded" placeholder="Material Name" />
+      <input type="number" id="quantity" class="w-full p-3 border border-gray-300 rounded" placeholder="Quantity" />
+      <input type="text" id="unit" class="w-full p-3 border border-gray-300 rounded" placeholder="Unit (e.g., ctn, kg)" />
+      <button id="submit-button" class="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700">Submit Order</button>
     </div>
-
-    <script>
-        // *** IMPORTANT: REPLACE THIS PLACEHOLDER WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
-        // Example: const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz.../exec';
-        // You provided this URL: https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwSvE-GYQGHVxHQfZHhBi_qGMNgVGjItuligu8Ik7MYolus_telDGP3uLBV95uQINTHJQ/exec'; 
-
-        // Material Items Data (UPDATED WITH UNITS)
-        const items = [
-            { id: 1, name: "Pizza box 9x9", category: "Packing", unit: "ctn" },
-            { id: 2, name: "Ajinomoto", category: "General Food", unit: "ctn" },
-            { id: 3, name: "Macaron Powder", category: "General Food", unit: "bags" },
-            { id: 4, name: "Aluminum Foil", category: "Packing", unit: "ctn" },
-            { id: 5, name: "Aluminum Tray 1x100 Regular size", category: "Packing", unit: "ctn" },
-            { id: 6, name: "Aluminum Tray 1x50 Big size", category: "Packing", unit: "ctn" },
-            { id: 7, name: "Apple Filling", category: "General Food", unit: "tin" },
-            { id: 8, name: "Baking Powder", category: "General Food", unit: "ctn" },
-            { id: 9, name: "Beef Burger", category: "Halal Meat", unit: "ctn" },
-            { id: 10, name: "Beef Liver", category: "Halal Meat", unit: "ctn" },
-            { id: 11, name: "Beef Tenderloin", category: "Halal Meat", unit: "ctn" },
-            { id: 12, name: "Beef Topside Brazil", category: "Halal Meat", unit: "ctn" },
-            { id: 13, name: "Black Garbage Bag", category: "Hygiene", unit: "ctn" },
-            { id: 14, name: "Black Grains Bread", category: "General Food", unit: "bags" },
-            { id: 15, name: "Black Olives slice", category: "General Food", unit: "ctn" },
-            { id: 16, name: "Black Pepper powder 24x250grm", category: "General Food", unit: "ctn" },
-            { id: 17, name: "Blue-Barry Filling", category: "General Food", unit: "tin" },
-            { id: 18, name: "Broad Beans", category: "General Food", unit: "bags" },
-            { id: 19, name: "Burghul Brown", category: "General Food", unit: "bags" },
-            { id: 20, name: "Butter Block", category: "Dairy", unit: "ctn" },
-            { id: 21, name: "Butter Paper", category: "Packing", unit: "ctn" },
-            { id: 22, name: "Cake Box size 25", category: "Packing", unit: "pcs" },
-            { id: 23, name: "Cake Box size 30", category: "Packing", unit: "pcs" },
-            { id: 24, name: "Cake Box size 35", category: "Packing", unit: "pcs" },
-            { id: 25, name: "Cake Marking", category: "Packing", unit: "pcs" },
-            { id: 26, name: "Cardamom Powder 24x250", category: "General Food", unit: "ctn" },
-            { id: 27, name: "Cashewnut", category: "General Food", unit: "bags" },
-            { id: 28, name: "Chicken Breast", category: "Halal Meat", unit: "ctn" },
-            { id: 29, name: "Chicken Burger", category: "Halal Meat", unit: "ctn" },
-            { id: 30, name: "Chicken Fillet", category: "Halal Meat", unit: "ctn" },
-            { id: 31, name: "Chicken Liver", category: "Halal Meat", unit: "ctn" },
-            { id: 32, name: "Chicken Sausage", category: "Halal Meat", unit: "ctn" },
-            { id: 33, name: "Chicken Shawarma", category: "Halal Meat", unit: "ctn" },
-            { id: 34, name: "Chickpeas", category: "General Food", unit: "bags" },
-            { id: 35, name: "Cinnamon Powder 24x250", category: "General Food", unit: "ctn" },
-            { id: 36, name: "Clear Tap 48mmX36", category: "Packing", unit: "ctn" },
-            { id: 37, name: "Cling Film 30cm", category: "Packing", unit: "ctn" },
-            { id: 38, name: "Cling Film 45cm", category: "Packing", unit: "ctn" },
-            { id: 39, name: "Clorix", category: "Hygiene", unit: "ctn" },
-            { id: 40, name: "Coconut Powder", category: "General Food", unit: "bags" },
-            { id: 41, name: "Coffee Cup", category: "Packing", unit: "ctn" },
-            { id: 42, name: "Compound Dark Chocolate", category: "General Food", unit: "ctn" },
-            { id: 43, name: "Coriander Powder 24x250", category: "General Food", unit: "ctn" },
-            { id: 44, name: "Corn Flour", category: "General Food", unit: "bags" },
-            { id: 45, name: "Cream Cake Mix Chocolate", category: "General Food", unit: "bags" },
-            { id: 46, name: "Cream Cake Mix Vanilla", category: "General Food", unit: "bags" },
-            { id: 47, name: "Cumin Powder 24x250", category: "General Food", unit: "ctn" },
-            { id: 48, name: "Cup-Cake size 9.5", category: "Packing", unit: "ctn" },
-            { id: 49, name: "Custard Powder", category: "General Food", unit: "ctn" },
-            { id: 50, name: "Dark Chocolate Coins", category: "General Food", unit: "ctn" },
-            { id: 51, name: "Dark Malts", category: "General Food", unit: "bags" },
-            { id: 52, name: "Dates Syrup", category: "General Food", unit: "ctn" },
-            { id: 53, name: "Detergent Powder", category: "Hygiene", unit: "bags" },
-            { id: 54, name: "Digestive Biscuits", category: "General Food", unit: "ctn" },
-            { id: 55, name: "Donut Box", category: "Packing", unit: "ctn" },
-            { id: 56, name: "Egyptian Rice", category: "General Food", unit: "bags" },
-            { id: 57, name: "Feta Cheese", category: "General Food", unit: "ctn" },
-            { id: 58, name: "Foam Plate S1", category: "Packing", unit: "ctn" },
-            { id: 59, name: "Foam Plate S2", category: "Packing", unit: "ctn" },
-            { id: 60, name: "Foam Plate S3", category: "Packing", unit: "ctn" },
-            { id: 61, name: "Foam Plate S4", category: "Packing", unit: "ctn" },
-            { id: 62, name: "Fondant Sugar", category: "General Food", unit: "pkt" },
-            { id: 63, name: "French Fries", category: "General Food", unit: "ctn" },
-            { id: 64, name: "Fresh Cream", category: "Dairy", unit: "ctn" },
-            { id: 65, name: "Frosting Sheets", category: "Packing", unit: "ctn" },
-            { id: 66, name: "Fruits Cocktail", category: "General Food", unit: "ctn" },
-            { id: 67, name: "Garlic Powder 24x250grm", category: "General Food", unit: "ctn" },
-            { id: 68, name: "Ghee", category: "General Food", unit: "ctn" },
-            { id: 69, name: "Ginger Powder 24x250grm", category: "General Food", unit: "ctn" },
-            { id: 70, name: "Gloves Large", category: "Hygiene", unit: "ctn" },
-            { id: 71, name: "Gloves Medium", category: "Hygiene", unit: "ctn" },
-            { id: 72, name: "Gloves Xlarge", category: "Hygiene", unit: "ctn" },
-            { id: 73, name: "Golden Twist Pin", category: "Packing", unit: "ctn" },
-            { id: 74, name: "Grape Leaves", category: "General Food", unit: "ctn" },
-            { id: 75, name: "Green Olives slice", category: "General Food", unit: "ctn" },
-            { id: 76, name: "Hair Net Cap", category: "Hygiene", unit: "ctn" },
-            { id: 77, name: "Hand Soap", category: "Hygiene", unit: "ctn" },
-            { id: 78, name: "HD Carry Bag Large", category: "Packing", unit: "ctn" },
-            { id: 79, name: "HD Carry Bag XL", category: "Packing", unit: "ctn" },
-            { id: 80, name: "HD Carry Bag XXL", category: "Packing", unit: "ctn" },
-            { id: 81, name: "Hot Pepper Paste", category: "General Food", unit: "ctn" },
-            { id: 82, name: "Hot Sauce", category: "General Food", unit: "ctn" },
-            { id: 83, name: "Kabab Powder", category: "General Food", unit: "bags" },
-            { id: 84, name: "Kiri Cheese", category: "Dairy", unit: "ctn" },
-            { id: 85, name: "Labna", category: "Dairy", unit: "ctn" },
-            { id: 86, name: "Mutton Leg", category: "Halal Meat", unit: "kg" },
-            { id: 87, name: "Maxi Roll", category: "Hygiene", unit: "ctn" },
-            { id: 88, name: "Mayonnaise Gallon", category: "General Food", unit: "pkt" },
-            { id: 89, name: "Mayonnaise Sachet", category: "General Food", unit: "ctn" },
-            { id: 90, name: "Meats Masala 24x250", category: "General Food", unit: "ctn" },
-            { id: 91, name: "Milk 1L", category: "Dairy", unit: "ctn" },
-            { id: 92, name: "Milk Powder", category: "General Food", unit: "bags" },
-            { id: 93, name: "Minced Beef", category: "Halal Meat", unit: "ctn" },
-            { id: 94, name: "Mix Bahrain Masala 24x250", category: "General Food", unit: "ctn" },
-            { id: 95, name: "Mixed Fruits Jam", category: "General Food", unit: "ctn" },
-            { id: 96, name: "Mozzarella Cheese", category: "Dairy", unit: "ctn" },
-            { id: 97, name: "Mushrooms", category: "General Food", unit: "ctn" },
-            { id: 98, name: "Mutton Fat", category: "Halal Meat", unit: "kg" },
-            { id: 99, name: "Nestle Coffee", category: "General Food", unit: "ctn" },
-            { id: 100, name: "Nestle Cream", category: "General Food", unit: "ctn" },
-            { id: 101, name: "Neutral Cold Glaze", category: "General Food", unit: "pkt" },
-            { id: 102, name: "Olive Oil 4x4", category: "General Food", unit: "ctn" },
-            { id: 103, name: "Orange Color", category: "General Food", unit: "ctn" },
-            { id: 104, name: "Orange Flavor", category: "General Food", unit: "ctn" },
-            { id: 105, name: "Oyster sauce", category: "General Food", unit: "ctn" },
-            { id: 106, name: "Paper Bag size no1", category: "Packing", unit: "ctn" },
-            { id: 107, name: "Paper Bag size no2", category: "Packing", unit: "ctn" },
-            { id: 108, name: "Paper Bag size no3", category: "Packing", unit: "ctn" },
-            { id: 109, name: "Pastry Margins", category: "General Food", unit: "ctn" },
-            { id: 110, name: "Peaches Slice", category: "General Food", unit: "ctn" },
-            { id: 111, name: "Peanuts", category: "General Food", unit: "kg" },
-            { id: 112, name: "Pineapple Slice", category: "General Food", unit: "ctn" },
-            { id: 113, name: "Pistachio Kernel", category: "General Food", unit: "kg" },
-            { id: 114, name: "Pizza Paper Box big size", category: "Packing", unit: "ctn" },
-            { id: 115, name: "Pizza Sauce", category: "General Food", unit: "ctn" },
-            { id: 116, name: "Plastic Spoon", category: "General Food", unit: "ctn" },
-            { id: 117, name: "Pts Box", category: "Packing", unit: "ctn" },
-            { id: 118, name: "Raisins", category: "General Food", unit: "kg" },
-            { id: 119, name: "Red Chili Powder 12x250", category: "General Food", unit: "ctn" },
-            { id: 120, name: "Rhc2 Box", category: "Packing", unit: "ctn" },
-            { id: 121, name: "Rhc5 Box", category: "Packing", unit: "ctn" },
-            { id: 122, name: "Sandwich Box", category: "Packing", unit: "ctn" },
-            { id: 123, name: "Semolina", category: "General Food", unit: "bags" },
-            { id: 124, name: "Sesame Seed", category: "General Food", unit: "bags" },
-            { id: 125, name: "Shortening", category: "General Food", unit: "ctn" },
-            { id: 126, name: "Sodium Bicarbonate", category: "General Food", unit: "ctn" },
-            { id: 127, name: "Soya Sauce", category: "General Food", unit: "ctn" },
-            { id: 128, name: "Sponge Cake Mix Chocolate", category: "General Food", unit: "bags" },
-            { id: 129, name: "Sponge Cake Mix Vanilla", category: "General Food", unit: "bags" },
-            { id: 130, name: "Spring Roll Paper", category: "General Food", unit: "ctn" },
-            { id: 131, name: "Sugar", category: "General Food", unit: "bags" },
-            { id: 132, name: "Sumac Powder 24x250grm", category: "General Food", unit: "ctn" },
-            { id: 133, name: "Sunflower Oil 6x1.8", category: "General Food", unit: "ctn" },
-            { id: 134, name: "Tahina", category: "General Food", unit: "tin" },
-            { id: 135, name: "Tea Powder", category: "General Food", unit: "bags" },
-            { id: 136, name: "Tomato Ketchup Gallon", category: "General Food", unit: "ctn" },
-            { id: 137, name: "Tomato Paste", category: "General Food", unit: "ctn" },
-            { id: 138, name: "Tomatoes Ketchup Sachet", category: "General Food", unit: "ctn" },
-            { id: 139, name: "Topping for Special Bread", category: "General Food", unit: "bags" },
-            { id: 140, name: "Turmeric Powder", category: "General Food", unit: "ctn" },
-            { id: 141, name: "Tutti frutti", category: "General Food", unit: "bags" },
-            { id: 142, name: "Vanilla Essence", category: "General Food", unit: "ctn" },
-            { id: 143, name: "Vanilla Powder", category: "General Food", unit: "ctn" },
-            { id: 144, name: "Vegetables Oil", category: "General Food", unit: "tin" },
-            { id: 145, name: "Whipping Cream", category: "Dairy", unit: "ctn" },
-            { id: 146, name: "Compound White Chocolate", category: "General Food", unit: "ctn" },
-            { id: 147, name: "White Garbage Bag", category: "Hygiene", unit: "ctn" },
-            { id: 148, name: "White Improver", category: "General Food", unit: "bags" },
-            { id: 149, name: "White Pepper Powder 24x250grm", category: "General Food", unit: "ctn" },
-            { id: 150, name: "White Slice Cheese", category: "Dairy", unit: "ctn" },
-            { id: 151, name: "White Vinegar", category: "General Food", unit: "ctn" },
-            { id: 152, name: "Whole Meal Flour", category: "General Food", unit: "bags" },
-            { id: 153, name: "Yeast", category: "General Food", unit: "ctn" },
-            { id: 154, name: "Yellow Color", category: "General Food", unit: "ctn" },
-            { id: 155, name: "Yogurt", category: "Dairy", unit: "ctn" },
-            { id: 156, name: "Zatter", category: "General Food", unit: "bags" }
-        ];
-
-        // Login Page Elements
-        const loginPageContainer = document.getElementById('login-page-container');
-        const loginUsernameInput = document.getElementById('login-username-input');
-        const loginPasswordInput = document.getElementById('login-password-input');
-        const loginButton = document.getElementById('login-button');
-        const loginMessage = document.getElementById('login-message');
-
-        // Main Form Elements
-        const mainFormContainer = document.getElementById('main-form-container');
-        const searchBar = document.getElementById('search-bar'); 
-        const itemsListDiv = document.getElementById('items-list');
-        const orderSummaryDiv = document.getElementById('order-summary-div');
-        const summaryList = document.getElementById('summary-list');
-        const noItemsSelectedMsg = document.getElementById('no-items-selected-msg');
-        const submitButton = document.getElementById('submit-button');
-        const clearButton = document.getElementById('clear-button');
-        const displayUsername = document.getElementById('display-username');
-        const displayRole = document.getElementById('display-role');
-        const logoutButton = document.getElementById('logout-button');
-        
-        let currentSearchQuery = ''; // Track search query
-
-        // Event Listeners
-        searchBar.addEventListener('input', (event) => {
-            currentSearchQuery = event.target.value.toLowerCase();
-            renderItems(); // Re-render items based on the search query
-        });
-
-        clearButton.addEventListener('click', clearForm);
-        submitButton.addEventListener('click', handleSubmitOrder);
-        loginButton.addEventListener('click', handleLogin);
-        logoutButton.addEventListener('click', handleLogout);
-
-        /**
-         * Renders material items based on the search query.
-         */
-        function renderItems() {
-            itemsListDiv.innerHTML = ''; // Clear current items
-
-            const filteredItems = items.filter(item => {
-                return item.name.toLowerCase().includes(currentSearchQuery);
-            });
-
-            filteredItems.forEach(item => {
-                const itemCard = document.createElement('div');
-                itemCard.className = 'item-card bg-white p-4 rounded-lg shadow-md flex items-center justify-between';
-                itemCard.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <label for="item-${item.id}" class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" id="item-${item.id}" data-item-id="${item.id}" class="item-checkbox form-checkbox h-5 w-5 text-indigo-600">
-                            <span class="text-gray-800 text-lg font-medium">${item.name}</span>
-                        </label>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="number" id="quantity-${item.id}" value="0" min="0" class="w-20 px-2 py-1 border rounded-md text-center bg-gray-100 quantity-input" disabled>
-                        <span class="text-gray-600 text-sm">${item.unit}</span> <!-- Display unit here -->
-                    </div>
-                `;
-                itemsListDiv.appendChild(itemCard);
-
-                const checkbox = itemCard.querySelector(`#item-${item.id}`);
-                const quantityInput = itemCard.querySelector(`#quantity-${item.id}`);
-
-                checkbox.addEventListener('change', () => {
-                    quantityInput.disabled = !checkbox.checked;
-                    if (checkbox.checked) {
-                        quantityInput.value = 1; // Default to 1 when checked
-                        quantityInput.classList.remove('bg-gray-100');
-                        quantityInput.classList.add('bg-white');
-                    } else {
-                        quantityInput.value = 0; // Reset to 0 when unchecked
-                        quantityInput.classList.remove('bg-white');
-                        quantityInput.classList.add('bg-gray-100');
-                    }
-                    updateOrderSummary();
-                });
-
-                quantityInput.addEventListener('input', updateOrderSummary);
-            });
-        }
-
-        /**
-         * Gathers selected items and their quantities for the order summary and submission.
-         * @returns {Array} An array of objects, each representing an ordered item.
-         */
-        function getSelectedOrderItems() {
-            const order = [];
-            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
-
-            checkboxes.forEach(checkbox => {
-                const itemId = parseInt(checkbox.dataset.itemId);
-                const quantityInput = document.getElementById(`quantity-${itemId}`);
-                const quantity = parseInt(quantityInput.value);
-
-                if (quantity > 0) {
-                    const item = items.find(i => i.id === itemId);
-                    order.push({
-                        id: item.id,
-                        name: item.name,
-                        quantity: quantity,
-                        unit: item.unit 
-                    });
-                }
-            });
-            return order;
-        }
-
-        /**
-         * Updates the visible order summary based on current selections.
-         */
-        function updateOrderSummary() {
-            const order = getSelectedOrderItems();
-            summaryList.innerHTML = ''; // Clear previous summary
-
-            if (order.length === 0) {
-                noItemsSelectedMsg.classList.remove('hidden');
-                summaryList.classList.add('hidden');
-                orderSummaryDiv.classList.add('hidden'); // Hide the whole summary div
-            } else {
-                noItemsSelectedMsg.classList.add('hidden');
-                summaryList.classList.remove('hidden');
-                orderSummaryDiv.classList.remove('hidden'); // Show the whole summary div
-                order.forEach(item => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${item.name}: ${item.quantity} ${item.unit}`;
-                    summaryList.appendChild(listItem);
-                });
-            }
-        }
-
-        /**
-         * Handles the login attempt.
-         */
-        async function handleLogin() {
-            // No longer checking against a specific URL, assuming the user has pasted their correct URL.
-            // If WEB_APP_URL is empty or invalid, the fetch will naturally fail.
-
-            const username = loginUsernameInput.value.trim();
-            const password = loginPasswordInput.value.trim();
-
-            if (!username || !password) {
-                loginMessage.textContent = 'Please enter both username and password.';
-                loginMessage.classList.remove('hidden');
-                return;
-            }
-
-            loginButton.disabled = true;
-            loginButton.textContent = 'Logging In...';
-            loginMessage.classList.add('hidden'); // Hide previous messages
-
-            const payload = {
-                action: 'login',
-                username: username,
-                password: password
-            };
-
-            try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'cors', // Use 'cors' mode to read the JSON response
-                    cache: 'no-cache',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server error during login:', response.status, response.statusText, errorText);
-                    loginMessage.textContent = `Login error: ${response.status} ${response.statusText}. Please try again.`;
-                    loginMessage.classList.remove('hidden');
-                    return;
-                }
-
-                const result = await response.json();
-                console.log('Login Apps Script response:', result);
-
-                if (result.success) {
-                    sessionStorage.setItem('loggedInUser', result.user.username);
-                    sessionStorage.setItem('loggedInRole', result.user.role);
-                    showMainForm(); // This should now correctly navigate
-                } else {
-                    loginMessage.textContent = result.message || 'Login failed. Please check your credentials.';
-                    loginMessage.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Network error during login:', error);
-                loginMessage.textContent = 'Network error during login. Please check your internet connection.';
-                loginMessage.classList.remove('hidden');
-            } finally {
-                loginButton.disabled = false;
-                loginButton.textContent = 'Log In';
-            }
-        }
-
-        /**
-         * Handles the submission of the order to the Google Apps Script.
-         */
-        async function handleSubmitOrder() {
-            const order = getSelectedOrderItems();
-            const submittedBy = sessionStorage.getItem('loggedInUser') || 'Anonymous'; 
-
-            if (order.length === 0) {
-                alert('Please select at least one item and enter a quantity greater than zero.');
-                return;
-            }
-
-            console.log('Attempting to submit order...');
-            console.log('WEB_APP_URL:', WEB_APP_URL); // Log the URL being used
-
-            const payload = {
-                action: 'submitOrder', 
-                orders: order,
-                submittedBy: submittedBy
-            };
-
-            submitButton.disabled = true; 
-            submitButton.textContent = 'Submitting...';
-
-            try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'cors', // Changed to 'cors' to read success/failure messages
-                    cache: 'no-cache',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server error submitting order:', response.status, response.statusText, errorText);
-                    alert(`Error submitting order: ${response.status} ${response.statusText}. Please try again.`);
-                    return;
-                }
-
-                const result = await response.json();
-                console.log('Apps Script response:', result);
-
-                if (result.success) {
-                    alert('Order submitted successfully! The sheet should be updated shortly.');
-                    clearForm(); 
-                } else {
-                    console.error('Apps Script reported an error:', result.message);
-                    alert(`Failed to submit order: ${result.message}.`);
-                }
-            } catch (error) {
-                console.error('Network error submitting order:', error);
-                alert('There was a network error submitting your order. Please check your internet connection and try again.');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Order';
-                updateOrderSummary(); 
-            }
-        }
-
-        /**
-         * Clears all selected checkboxes and resets quantities.
-         */
-        function clearForm() {
-            const checkboxes = document.querySelectorAll('.item-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-                const quantityInput = document.getElementById(`quantity-${checkbox.dataset.itemId}`);
-                quantityInput.value = 0;
-                quantityInput.disabled = true;
-                quantityInput.classList.remove('bg-white');
-                quantityInput.classList.add('bg-gray-100');
-            });
-            orderSummaryDiv.classList.add('hidden'); 
-            searchBar.value = ''; // Clear search bar
-            currentSearchQuery = ''; // Reset search query
-            updateOrderSummary(); 
-            renderItems(); // Re-render items to show all after clearing search
-        }
-
-        /**
-         * Shows the main form and hides the login page.
-         */
-        function showMainForm() {
-            const username = sessionStorage.getItem('loggedInUser');
-            const role = sessionStorage.getItem('loggedInRole');
-            if (username && role) {
-                displayUsername.textContent = username;
-                displayRole.textContent = role;
-                loginPageContainer.classList.add('hidden');
-                mainFormContainer.classList.remove('hidden');
-                renderItems(); // Render items when form is shown
-            } else {
-                // If for some reason session data is missing, redirect to login
-                showLoginPage(); 
-            }
-        }
-
-        /**
-         * Shows the login page and hides the main form.
-         */
-        function showLoginPage() {
-            loginPageContainer.classList.remove('hidden');
-            mainFormContainer.classList.add('hidden');
-            loginUsernameInput.value = ''; // Clear inputs
-            loginPasswordInput.value = '';
-            loginMessage.classList.add('hidden'); // Hide messages
-        }
-
-        /**
-         * Handles user logout.
-         */
-        function handleLogout() {
-            sessionStorage.removeItem('loggedInUser');
-            sessionStorage.removeItem('loggedInRole');
-            alert('You have been logged out.'); // Simple alert for now
-            showLoginPage();
-        }
-
-        // Initial load check: Determine whether to show login or main form
-        window.onload = () => {
-            if (sessionStorage.getItem('loggedInUser') && sessionStorage.getItem('loggedInRole')) {
-                showMainForm();
-            } else {
-                showLoginPage();
-            }
-        };
-    </script>
+  </div>
 </body>
 </html>
