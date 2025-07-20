@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place a Request - Order Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 48rem; /* Adjusted for more content */
+            box-sizing: border-box;
+        }
+        .form-input, .form-select { /* Added form-select */
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus, .form-select:focus { /* Added form-select focus */
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .message-box.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message-box.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .item-list-table-container {
+            max-height: 300px; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable vertical scrolling */
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .item-list-table th, .item-list-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .item-list-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1; /* Ensure header is above scrolling content */
+        }
+        .item-list-table tr:last-child td {
+            border-bottom: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Place a Material Request</h2>
+        <p class="text-center text-gray-600 mb-4">Logged in as: <span id="loggedInUser" class="font-semibold"></span> (<span id="loggedInRole" class="font-semibold"></span>)</p>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <div class="space-y-4 mb-6 p-4 border border-gray-200 rounded-lg">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Add Item to Request</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-1">
+                    <label for="itemNameSelect" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                    <!-- Changed from input to select -->
+                    <select id="itemNameSelect" class="form-select">
+                        <option value="">-- Select an Item --</option>
+                        <!-- Options will be loaded dynamically by JavaScript -->
+                    </select>
+                </div>
+                <div>
+                    <label for="itemQuantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                    <input type="number" id="itemQuantity" class="form-input" value="1" min="1">
+                </div>
+                <div>
+                    <label for="itemUnit" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                    <!-- This input will be auto-filled and read-only -->
+                    <input type="text" id="itemUnit" class="form-input" placeholder="Unit" readonly>
+                </div>
+            </div>
+            <button id="addItemBtn" class="btn-secondary mt-4 w-full">Add Item to List</button>
+        </div>
+
+        <h3 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Current Request List</h3>
+        <div id="requestListContainer" class="item-list-table-container">
+            <table class="min-w-full divide-y divide-gray-200 item-list-table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requestListBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Request items will be dynamically added here -->
+                    <tr id="noItemsMessage">
+                        <td colspan="4" class="py-3 text-center text-gray-500">No items added yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 mt-8">
+            <button id="submitRequestBtn" class="btn-primary flex-1">Submit Request</button>
+            <button id="backToDashboardBtn" class="btn-secondary flex-1">Back to Dashboard</button>
+        </div>
+
+        <!-- Admin Materials Management Section (Hidden by default) -->
+        <div id="adminMaterialsSection" class="space-y-4 mt-12 p-4 border border-blue-200 bg-blue-50 rounded-lg hidden">
+            <h3 class="text-xl font-bold text-blue-800 mb-4">Admin: Manage Materials List</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="newMaterialName" class="block text-sm font-medium text-gray-700 mb-1">New Material Name</label>
+                    <input type="text" id="newMaterialName" class="form-input" placeholder="e.g., New Tool Set">
+                </div>
+                <div>
+                    <label for="newMaterialUnit" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                    <input type="text" id="newMaterialUnit" class="form-input" placeholder="e.g., pcs">
+                </div>
+            </div>
+            <button id="addMaterialBtn" class="btn-primary mt-4 w-full bg-blue-600 hover:bg-blue-700">Add New Material</button>
+        </div>
+    </div>
+
+    <script>
+        // *** IMPORTANT: REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx5kE1Ynlq3NH7sgDK90Gg47T_gSPJKryTKyauSjofIrZmTAJc0K9ik59ibO0F2CgxSkA/exec';
+
+        // UI Elements
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+        const loggedInRoleSpan = document.getElementById('loggedInRole');
+        const messageBox = document.getElementById('messageBox');
+
+        const itemNameSelect = document.getElementById('itemNameSelect'); // Changed to select
+        const itemQuantityInput = document.getElementById('itemQuantity');
+        const itemUnitInput = document.getElementById('itemUnit'); // This will be readonly
+        const addItemBtn = document.getElementById('addItemBtn');
+        const requestListBody = document.getElementById('requestListBody');
+        const noItemsMessage = document.getElementById('noItemsMessage');
+        const submitRequestBtn = document.getElementById('submitRequestBtn');
+        const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+
+        const adminMaterialsSection = document.getElementById('adminMaterialsSection'); // New Admin section
+        const newMaterialNameInput = document.getElementById('newMaterialName');
+        const newMaterialUnitInput = document.getElementById('newMaterialUnit');
+        const addMaterialBtn = document.getElementById('addMaterialBtn');
+
+        let currentRequestItems = []; // Array to store items for the current request
+        let loggedInUser = null;
+        let loggedInRole = null;
+        let materialsList = []; // Array to store fetched materials
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success' or 'error'.
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${type}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Renders the current request items in the table.
+         */
+        function renderRequestList() {
+            requestListBody.innerHTML = ''; // Clear existing list
+
+            if (currentRequestItems.length === 0) {
+                noItemsMessage.classList.remove('hidden');
+                requestListBody.appendChild(noItemsMessage);
+            } else {
+                noItemsMessage.classList.add('hidden');
+                currentRequestItems.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${item.name}</td>
+                        <td class="whitespace-nowrap">${item.quantity}</td>
+                        <td class="whitespace-nowrap">${item.unit}</td>
+                        <td class="whitespace-nowrap">
+                            <button data-index="${index}" class="remove-item-btn text-red-500 hover:text-red-700 font-semibold text-sm rounded-full p-1 transition-colors duration-200">
+                                &times; Remove
+                            </button>
+                        </td>
+                    `;
+                    requestListBody.appendChild(row);
+                });
+
+                // Add event listeners to new remove buttons
+                document.querySelectorAll('.remove-item-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const indexToRemove = parseInt(event.target.dataset.index);
+                        currentRequestItems.splice(indexToRemove, 1); // Remove item from array
+                        renderRequestList(); // Re-render the list
+                    });
+                });
+            }
+        }
+
+        /**
+         * Checks if the user is logged in. If not, redirects to login page.
+         * Populates user info spans and shows/hides admin section.
+         */
+        function checkAuthAndLoadUserInfo() {
+            const storedUser = sessionStorage.getItem('loggedInUser');
+            if (!storedUser) {
+                window.location.href = 'login.html'; // Redirect if not logged in
+                return;
+            }
+            const user = JSON.parse(storedUser);
+            loggedInUser = user.username;
+            loggedInRole = user.role;
+            loggedInUserSpan.textContent = loggedInUser;
+            loggedInRoleSpan.textContent = loggedInRole;
+
+            // Show Admin Materials Section if user is Administrator
+            if (loggedInRole.toLowerCase() === 'administrator') {
+                adminMaterialsSection.classList.remove('hidden');
+            } else {
+                adminMaterialsSection.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Fetches the list of materials from the Apps Script and populates the dropdown.
+         */
+        async function fetchMaterialsList() {
+            try {
+                const url = `${WEB_APP_URL}?action=getMaterialsList`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch materials list:', response.status, response.statusText, errorText);
+                    showMessage('Failed to load materials list. Please try again.', 'error');
+                    return;
+                }
+                const data = await response.json();
+                if (data.success && data.data) {
+                    materialsList = data.data; // Store fetched data
+                    populateMaterialsDropdown(materialsList);
+                } else {
+                    showMessage(data.message || 'No materials found.', 'error');
+                    materialsList = []; // Ensure it's empty if no data
+                }
+            } catch (error) {
+                console.error('Error fetching materials list:', error);
+                showMessage('An error occurred while fetching materials. Check console.', 'error');
+            }
+        }
+
+        /**
+         * Populates the itemNameSelect dropdown with fetched materials.
+         * @param {Array<object>} materials - Array of material objects { 'Item Name', 'Unit' }.
+         */
+        function populateMaterialsDropdown(materials) {
+            itemNameSelect.innerHTML = '<option value="">-- Select an Item --</option>'; // Reset dropdown
+            materials.forEach(material => {
+                const option = document.createElement('option');
+                option.value = material['Item Name'];
+                option.textContent = material['Item Name'];
+                // Store the unit in a data attribute for easy retrieval
+                option.dataset.unit = material['Unit'];
+                itemNameSelect.appendChild(option);
+            });
+        }
+
+        // --- Event Handlers ---
+
+        /**
+         * Handles selection change in the materials dropdown to auto-fill unit.
+         */
+        itemNameSelect.addEventListener('change', () => {
+            const selectedOption = itemNameSelect.options[itemNameSelect.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                itemUnitInput.value = selectedOption.dataset.unit || '';
+            } else {
+                itemUnitInput.value = ''; // Clear unit if no item is selected
+            }
+        });
+
+        /**
+         * Adds an item to the current request list.
+         */
+        function addItemToRequest() {
+            const name = itemNameSelect.value.trim(); // Get from select
+            const quantity = parseInt(itemQuantityInput.value);
+            const unit = itemUnitInput.value.trim(); // Get from auto-filled input
+
+            if (!name || isNaN(quantity) || quantity <= 0 || !unit) {
+                showMessage('Please select an item, enter a valid quantity (must be > 0), and ensure unit is filled.', 'error');
+                return;
+            }
+
+            currentRequestItems.push({ name, quantity, unit });
+            renderRequestList(); // Update UI
+            itemNameSelect.value = ''; // Clear inputs
+            itemQuantityInput.value = 1;
+            itemUnitInput.value = '';
+            showMessage('Item added to request list!', 'success');
+        }
+
+        /**
+         * Submits the current request to the Google Apps Script.
+         */
+        async function submitRequest() {
+            if (currentRequestItems.length === 0) {
+                showMessage('Please add items to your request before submitting.', 'error');
+                return;
+            }
+
+            // Ensure user info is available
+            if (!loggedInUser || !loggedInRole) {
+                showMessage('User session expired. Please log in again.', 'error');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
+            const payload = {
+                action: 'submitRequest',
+                orders: currentRequestItems,
+                submittedBy: loggedInUser,
+                role: loggedInRole // Pass role for backend permission checks
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Network response was not ok:', response.status, response.statusText, errorText);
+                    showMessage(`Request submission failed: Server responded with status ${response.status}.`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    currentRequestItems = []; // Clear request list after successful submission
+                    renderRequestList(); // Update UI
+                } else {
+                    showMessage(data.message || 'Request submission failed.', 'error');
+                }
+            } catch (error) {
+                console.error('Request submission error:', error);
+                showMessage('An error occurred during request submission. Please try again. Check console for details.', 'error');
+            }
+        }
+
+        /**
+         * Handles adding a new material to the Materials List (Admin only).
+         */
+        async function addMaterial() {
+            const newName = newMaterialNameInput.value.trim();
+            const newUnit = newMaterialUnitInput.value.trim();
+
+            if (!newName || !newUnit) {
+                showMessage('Please enter both name and unit for the new material.', 'error');
+                return;
+            }
+
+            // Client-side check for duplicate (optional, backend also checks)
+            if (materialsList.some(m => m['Item Name'].toLowerCase() === newName.toLowerCase())) {
+                showMessage(`Material "${newName}" already exists in the list.`, 'error');
+                return;
+            }
+
+            const payload = {
+                action: 'addMaterial',
+                material: { itemName: newName, unit: newUnit },
+                role: loggedInRole // Ensure role is passed for backend permission check
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Network response was not ok for addMaterial:', response.status, response.statusText, errorText);
+                    showMessage(`Failed to add material: Server responded with status ${response.status}.`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    newMaterialNameInput.value = '';
+                    newMaterialUnitInput.value = '';
+                    await fetchMaterialsList(); // Re-fetch and re-populate dropdown
+                } else {
+                    showMessage(data.message || 'Failed to add new material.', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding new material:', error);
+                showMessage('An error occurred while adding material. Check console.', 'error');
+            }
+        }
+
+
+        /**
+         * Navigates back to the dashboard.
+         */
+        function backToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // --- Event Listeners ---
+        addItemBtn.addEventListener('click', addItemToRequest);
+        submitRequestBtn.addEventListener('click', submitRequest);
+        backToDashboardBtn.addEventListener('click', backToDashboard);
+        addMaterialBtn.addEventListener('click', addMaterial); // New event listener for admin button
+
+        // Allow pressing Enter in item quantity field to add item
+        itemQuantityInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                addItemToRequest();
+            }
+        });
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkAuthAndLoadUserInfo();
+            await fetchMaterialsList(); // Fetch materials list when page loads
+            renderRequestList(); // Display "No items added yet" initially
+        });
+    </script>
+</body>
+</html>
