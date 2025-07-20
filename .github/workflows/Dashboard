@@ -133,52 +133,39 @@
     </div>
 
     <script>
-        // UI Elements
-        const loggedInUserSpan = document.getElementById('loggedInUser');
-        const loggedInRoleSpan = document.getElementById('loggedInRole');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const dashboardButtons = document.querySelectorAll('.dashboard-button');
+       const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyN4UY88LaFnaDpGmRf_4KQ6kbIcQIkRrqdzeckOCLKvHn8PK6koNDw9EnUoLmGmljxMA/exec'; // Your Script URL
 
-        // --- Function to check user authentication and role ---
-        function checkAuthAndRenderDashboard() {
-            const storedUser = sessionStorage.getItem('loggedInUser');
+async function loginUser() {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
 
-            if (!storedUser) {
-                // If no user data, redirect to login page
-                window.location.href = 'login.html';
-                return;
-            }
+    if (!username || !password) {
+        showMessage('Please enter both username and password.', 'error');
+        return;
+    }
 
-            const user = JSON.parse(storedUser);
-            const username = user.username;
-            const role = user.role;
+    const url = `${WEB_APP_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
 
-            loggedInUserSpan.textContent = username;
-            loggedInRoleSpan.textContent = role;
+    try {
+        const response = await fetch(url);
+        const result = await response.json();
 
-            // Show/hide buttons based on role
-            dashboardButtons.forEach(button => {
-                const requiredRoles = button.dataset.roleAccess ? button.dataset.roleAccess.split(',') : [];
+        if (result.success) {
+            sessionStorage.setItem('loggedInUser', JSON.stringify(result.data));
 
-                if (requiredRoles.length === 0 || requiredRoles.includes(role.toLowerCase())) {
-                    button.classList.remove('hidden');
-                } else {
-                    button.classList.add('hidden');
-                }
-            });
+            showMessage('Login successful! Redirecting...', 'success');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html'; // Same repo, separate file
+            }, 1500);
+        } else {
+            showMessage(result.message, 'error');
         }
+    } catch (error) {
+        console.error('Login error:', error);
+        showMessage('An error occurred. Try again.', 'error');
+    }
+}
 
-        // --- Event Handlers ---
-        function logoutUser() {
-            sessionStorage.removeItem('loggedInUser'); // Clear user data
-            window.location.href = 'login.html'; // Redirect to login page
-        }
-
-        // --- Event Listeners ---
-        logoutBtn.addEventListener('click', logoutUser);
-
-        // Run on page load
-        document.addEventListener('DOMContentLoaded', checkAuthAndRenderDashboard);
     </script>
 </body>
 </html>
