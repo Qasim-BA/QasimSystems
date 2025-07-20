@@ -95,38 +95,89 @@
     </div>
 
     <script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyN4UY88LaFnaDpGmRf_4KQ6kbIcQIkRrqdzeckOCLKvHn8PK6koNDw9EnUoLmGmljxMA/exec'; // Your Script URL
-
-async function loginUser() {
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!username || !password) {
-        showMessage('Please enter both username and password.', 'error');
-        return;
-    }
-
-    const url = `${WEB_APP_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-
-    try {
-        const response = await fetch(url);
-        const result = await response.json();
-
-        if (result.success) {
-            sessionStorage.setItem('loggedInUser', JSON.stringify(result.data));
-
-            showMessage('Login successful! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html'; // Same repo, separate file
-            }, 1500);
-        } else {
-            showMessage(result.message, 'error');
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
         }
-    } catch (error) {
-        console.error('Login error:', error);
-        showMessage('An error occurred. Try again.', 'error');
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 1rem;
+            font-size: 1rem;
+        }
+        #messageBox {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+        <form onsubmit="event.preventDefault(); loginUser();">
+            <input type="text" id="usernameInput" placeholder="Username" required />
+            <input type="password" id="passwordInput" placeholder="Password" required />
+            <button type="submit">Login</button>
+        </form>
+        <div id="messageBox"></div>
+    </div>
+
+    <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyN4UY88LaFnaDpGmRf_4KQ6kbIcQIkRrqdzeckOCLKvHn8PK6koNDw9EnUoLmGmljxMA/exec';
+
+    async function loginUser() {
+        const username = document.getElementById("usernameInput").value.trim();
+        const password = document.getElementById("passwordInput").value.trim();
+
+        if (!username || !password) {
+            showMessage('Please enter both username and password.', 'error');
+            return;
+        }
+
+        const url = \`\${WEB_APP_URL}?action=login&username=\${encodeURIComponent(username)}&password=\${encodeURIComponent(password)}\`;
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.success) {
+                sessionStorage.setItem('loggedInUser', JSON.stringify(result.data));
+                showMessage('Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'Dashboard.html';
+                }, 1500);
+            } else {
+                showMessage(result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showMessage('An error occurred. Try again.', 'error');
+        }
     }
-}
+
+    function showMessage(msg, type) {
+        const box = document.getElementById('messageBox');
+        box.textContent = msg;
+        box.style.color = type === 'error' ? 'red' : 'green';
+    }
     </script>
 </body>
 </html>
