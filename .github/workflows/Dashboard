@@ -133,52 +133,33 @@
     </div>
 
     <script>
-        // UI Elements
-        const loggedInUserSpan = document.getElementById('loggedInUser');
-        const loggedInRoleSpan = document.getElementById('loggedInRole');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const dashboardButtons = document.querySelectorAll('.dashboard-button');
+    document.addEventListener('DOMContentLoaded', () => {
+        const userJSON = sessionStorage.getItem('loggedInUser');
+        const user = userJSON ? JSON.parse(userJSON) : null;
 
-        // --- Function to check user authentication and role ---
-        function checkAuthAndRenderDashboard() {
-            const storedUser = sessionStorage.getItem('loggedInUser');
+        if (!user) {
+            window.location.href = 'login.html'; // Block unauthenticated access
+            return;
+        }
 
-            if (!storedUser) {
-                // If no user data, redirect to login page
-                window.location.href = 'login.html';
-                return;
+        document.getElementById('loggedInUser').textContent = user.username;
+        document.getElementById('loggedInRole').textContent = user.role;
+
+        const buttons = document.querySelectorAll('.dashboard-button');
+        buttons.forEach(btn => {
+            const allowedRoles = (btn.dataset.roleAccess || '').split(',');
+            if (!allowedRoles.includes(user.role.toLowerCase())) {
+                btn.classList.add('hidden');
             }
+        });
 
-            const user = JSON.parse(storedUser);
-            const username = user.username;
-            const role = user.role;
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.removeItem('loggedInUser');
+            window.location.href = 'login.html';
+        });
+    });
+</script>
 
-            loggedInUserSpan.textContent = username;
-            loggedInRoleSpan.textContent = role;
-
-            // Show/hide buttons based on role
-            dashboardButtons.forEach(button => {
-                const requiredRoles = button.dataset.roleAccess ? button.dataset.roleAccess.split(',') : [];
-
-                if (requiredRoles.length === 0 || requiredRoles.includes(role.toLowerCase())) {
-                    button.classList.remove('hidden');
-                } else {
-                    button.classList.add('hidden');
-                }
-            });
-        }
-
-        // --- Event Handlers ---
-        function logoutUser() {
-            sessionStorage.removeItem('loggedInUser'); // Clear user data
-            window.location.href = 'login.html'; // Redirect to login page
-        }
-
-        // --- Event Listeners ---
-        logoutBtn.addEventListener('click', logoutUser);
-
-        // Run on page load
-        document.addEventListener('DOMContentLoaded', checkAuthAndRenderDashboard);
     </script>
 </body>
 </html>
