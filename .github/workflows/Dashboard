@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Order Management App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            padding: 2.5rem; /* p-10 */
+            width: 100%;
+            max-width: 48rem; /* Increased max-width for more content */
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive grid for buttons */
+            gap: 1.5rem; /* gap-6 */
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        .dashboard-button {
+            background-color: #4f46e5; /* indigo-600 */
+            color: #ffffff;
+            padding: 1.5rem 1rem; /* py-6 px-4 */
+            border-radius: 0.75rem; /* rounded-xl */
+            font-weight: 600; /* font-semibold */
+            font-size: 1.125rem; /* text-lg */
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none; /* Remove underline for links */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .dashboard-button:hover {
+            background-color: #4338ca; /* indigo-700 */
+            transform: translateY(-3px); /* Slight lift effect */
+        }
+        .dashboard-button svg {
+            margin-bottom: 0.75rem; /* mb-3 */
+            width: 2.5rem; /* h-10 w-10 */
+            height: 2.5rem;
+        }
+        .btn-logout {
+            background-color: #ef4444; /* red-500 */
+            color: #ffffff;
+            padding: 0.75rem 1.5rem; /* py-3 px-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 600; /* font-semibold */
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            width: auto; /* Adjust width */
+            margin-top: 2rem;
+            display: inline-block; /* Allow margin auto to center */
+        }
+        .btn-logout:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="appContainer">
+        <h2 class="text-4xl font-bold text-center text-gray-800 mb-6">Dashboard</h2>
+        <p class="text-center text-gray-600 mb-8">Welcome, <span id="loggedInUser" class="font-semibold text-indigo-700"></span>! Your role: <span id="loggedInRole" class="font-semibold text-indigo-700"></span></p>
+
+        <div class="dashboard-grid">
+            <!-- LPOs Button -->
+            <a href="#" id="btnLPOs" class="dashboard-button" data-role-access="administrator,purchaser">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.23 10.61L14.25 10.5m-9.75 4.5l-2.625-2.625C2.33 11.23 2 10.59 2 9.938V8.25c0-.966.784-1.75 1.75-1.75h1.5A1.75 1.75 0 017 8.25v1.5c0 .966-.784 1.75-1.75 1.75H3.75m10.125-7.5H19.5M19.5 18V9.75m-3.75 9.75H5.25C4.01 19.5 3 18.49 3 17.25V5.25c0-1.24 1.01-2.25 2.25-2.25h13.5c1.24 0 2.25 1.01 2.25 2.25v12c0 1.24-1.01 2.25-2.25 2.25z" />
+                </svg>
+                LPOs
+            </a>
+
+            <!-- Inventory Button -->
+            <a href="#" id="btnInventory" class="dashboard-button" data-role-access="administrator,purchaser,storekeeper">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+                Inventory
+            </a>
+
+            <!-- Place a Request Button -->
+            <a href="#" id="btnPlaceRequest" class="dashboard-button" data-role-access="administrator,purchaser,storekeeper">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Place a Request
+            </a>
+
+            <!-- Users Management Button (Admin only) -->
+            <a href="#" id="btnUsersManagement" class="dashboard-button" data-role-access="administrator">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.562-2.74H15m-3.983 1.122a3 3 0 00-4.37-3.983 3 3 0 003.982 4.37zM9.75 14.25l-1.5 1.5M10.5 18L9 19.5m6-1.5l-1.5-1.5m1.5 1.5L15 19.5M4.5 19.128a9.38 9.38 0 01-2.625.372 9.337 9.337 0 01-4.121-.952 4.125 4.125 0 017.562-2.74H4.5z" />
+                </svg>
+                Users Management
+            </a>
+
+            <!-- Reports Button (Admin only) -->
+            <a href="#" id="btnReports" class="dashboard-button" data-role-access="administrator">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
+                </svg>
+                Reports
+            </a>
+        </div>
+
+        <button id="logoutBtn" class="btn-logout">Logout</button>
+    </div>
+
+    <script>
+        // UI Elements
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+        const loggedInRoleSpan = document.getElementById('loggedInRole');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const dashboardButtons = document.querySelectorAll('.dashboard-button');
+
+        // --- Function to check user authentication and role ---
+        function checkAuthAndRenderDashboard() {
+            const storedUser = sessionStorage.getItem('loggedInUser');
+
+            if (!storedUser) {
+                // If no user data, redirect to login page
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = JSON.parse(storedUser);
+            const username = user.username;
+            const role = user.role;
+
+            loggedInUserSpan.textContent = username;
+            loggedInRoleSpan.textContent = role;
+
+            // Show/hide buttons based on role
+            dashboardButtons.forEach(button => {
+                const requiredRoles = button.dataset.roleAccess ? button.dataset.roleAccess.split(',') : [];
+
+                if (requiredRoles.length === 0 || requiredRoles.includes(role.toLowerCase())) {
+                    button.classList.remove('hidden');
+                } else {
+                    button.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- Event Handlers ---
+        function logoutUser() {
+            sessionStorage.removeItem('loggedInUser'); // Clear user data
+            window.location.href = 'login.html'; // Redirect to login page
+        }
+
+        // --- Event Listeners ---
+        logoutBtn.addEventListener('click', logoutUser);
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', checkAuthAndRenderDashboard);
+    </script>
+</body>
+</html>
