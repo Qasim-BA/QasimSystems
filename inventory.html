@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management - Order System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 60rem; /* Wider for tables */
+            box-sizing: border-box;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .message-box.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message-box.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .table-container {
+            max-height: 400px; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable vertical scrolling */
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .data-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Inventory Management</h2>
+        <p class="text-center text-gray-600 mb-4">Logged in as: <span id="loggedInUser" class="font-semibold"></span> (<span id="loggedInRole" class="font-semibold"></span>)</p>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Current Inventory Display -->
+        <h3 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Current Stock Levels</h3>
+        <div class="table-container">
+            <table class="min-w-full divide-y divide-gray-200 data-table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Current Stock</th>
+                        <th>Unit</th>
+                        <th>Last Updated</th>
+                        <th>Minimum Stock</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryListBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Inventory items will be dynamically added here -->
+                    <tr id="noInventoryMessage">
+                        <td colspan="5" class="py-3 text-center text-gray-500">No inventory data available.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Update Inventory Section (Visible to Administrator and Storekeeper) -->
+        <div id="updateInventorySection" class="space-y-4 mt-12 p-4 border border-indigo-200 bg-indigo-50 rounded-lg hidden">
+            <h3 class="text-xl font-bold text-indigo-800 mb-4">Update Stock</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-1">
+                    <label for="updateItemNameSelect" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                    <select id="updateItemNameSelect" class="form-select">
+                        <option value="">-- Select an Item --</option>
+                        <!-- Options will be loaded dynamically by JavaScript -->
+                    </select>
+                </div>
+                <div>
+                    <label for="stockChangeQuantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity Change</label>
+                    <input type="number" id="stockChangeQuantity" class="form-input" placeholder="e.g., 10 (add) or -5 (remove)">
+                </div>
+                <div>
+                    <label for="updateItemUnit" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                    <input type="text" id="updateItemUnit" class="form-input" placeholder="Unit" readonly>
+                </div>
+            </div>
+            <button id="updateStockBtn" class="btn-primary mt-4 w-full bg-indigo-600 hover:bg-indigo-700">Update Stock</button>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 mt-8">
+            <button id="backToDashboardBtn" class="btn-secondary flex-1">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        // *** IMPORTANT: REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx5kE1Ynlq3NH7sgDK90Gg47T_gSPJKryTKyauSjofIrZmTAJc0K9ik59ibO0F2CgxSkA/exec';
+
+        // UI Elements
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+        const loggedInRoleSpan = document.getElementById('loggedInRole');
+        const messageBox = document.getElementById('messageBox');
+        const inventoryListBody = document.getElementById('inventoryListBody');
+        const noInventoryMessage = document.getElementById('noInventoryMessage');
+        const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+
+        const updateInventorySection = document.getElementById('updateInventorySection');
+        const updateItemNameSelect = document.getElementById('updateItemNameSelect');
+        const stockChangeQuantityInput = document.getElementById('stockChangeQuantity');
+        const updateItemUnitInput = document.getElementById('updateItemUnit');
+        const updateStockBtn = document.getElementById('updateStockBtn');
+
+        let loggedInUser = null;
+        let loggedInRole = null;
+        let currentInventoryData = []; // To store fetched inventory for display and updates
+        let materialsList = []; // To populate the update dropdown (needed for units)
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success' or 'error'.
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${type}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Checks if the user is logged in. If not, redirects to login page.
+         * Populates user info spans and shows/hides update section.
+         */
+        function checkAuthAndLoadUserInfo() {
+            const storedUser = sessionStorage.getItem('loggedInUser');
+            if (!storedUser) {
+                window.location.href = 'login.html'; // Redirect if not logged in
+                return;
+            }
+            const user = JSON.parse(storedUser);
+            loggedInUser = user.username;
+            loggedInRole = user.role;
+            loggedInUserSpan.textContent = loggedInUser;
+            loggedInRoleSpan.textContent = loggedInRole;
+
+            // Show Update Inventory Section if user is Administrator or Storekeeper
+            if (loggedInRole.toLowerCase() === 'administrator' || loggedInRole.toLowerCase() === 'storekeeper') {
+                updateInventorySection.classList.remove('hidden');
+            } else {
+                updateInventorySection.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Fetches inventory data from the Apps Script and renders it.
+         */
+        async function fetchInventoryData() {
+            try {
+                // Pass role for backend permission check
+                const url = `${WEB_APP_URL}?action=getInventory&role=${encodeURIComponent(loggedInRole)}`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch inventory data:', response.status, response.statusText, errorText);
+                    showMessage('Failed to load inventory. Please try again.', 'error');
+                    return;
+                }
+                const data = await response.json();
+                if (data.success && data.data) {
+                    currentInventoryData = data.data; // Store fetched data
+                    renderInventoryTable(currentInventoryData);
+                } else {
+                    showMessage(data.message || 'No inventory data available.', 'error');
+                    currentInventoryData = [];
+                    renderInventoryTable([]); // Render empty table
+                }
+            } catch (error) {
+                console.error('Error fetching inventory data:', error);
+                showMessage('An error occurred while fetching inventory. Check console.', 'error');
+            }
+        }
+
+        /**
+         * Renders the inventory data into the table.
+         * @param {Array<object>} inventory - Array of inventory item objects.
+         */
+        function renderInventoryTable(inventory) {
+            inventoryListBody.innerHTML = ''; // Clear existing rows
+            if (inventory.length === 0) {
+                noInventoryMessage.classList.remove('hidden');
+                inventoryListBody.appendChild(noInventoryMessage);
+            } else {
+                noInventoryMessage.classList.add('hidden');
+                inventory.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${item['Item Name']}</td>
+                        <td class="whitespace-nowrap">${item['Current Stock']}</td>
+                        <td class="whitespace-nowrap">${item['Unit']}</td>
+                        <td class="whitespace-nowrap">${item['Last Updated'] || 'N/A'}</td>
+                        <td class="whitespace-nowrap">${item['Minimum Stock'] || 'N/A'}</td>
+                    `;
+                    inventoryListBody.appendChild(row);
+                });
+            }
+        }
+
+        /**
+         * Fetches the list of materials (for the update dropdown) from the Apps Script.
+         */
+        async function fetchMaterialsListForUpdate() {
+            try {
+                const url = `${WEB_APP_URL}?action=getMaterialsList`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch materials list for update:', response.status, response.statusText, errorText);
+                    // Don't show error to user if this fails, as main functionality is inventory display
+                    return;
+                }
+                const data = await response.json();
+                if (data.success && data.data) {
+                    materialsList = data.data; // Store fetched data
+                    populateUpdateMaterialsDropdown(materialsList);
+                } else {
+                    materialsList = [];
+                }
+            } catch (error) {
+                console.error('Error fetching materials list for update:', error);
+            }
+        }
+
+        /**
+         * Populates the updateItemNameSelect dropdown with fetched materials.
+         * @param {Array<object>} materials - Array of material objects { 'Item Name', 'Unit' }.
+         */
+        function populateUpdateMaterialsDropdown(materials) {
+            updateItemNameSelect.innerHTML = '<option value="">-- Select an Item --</option>'; // Reset dropdown
+            materials.forEach(material => {
+                const option = document.createElement('option');
+                option.value = material['Item Name'];
+                option.textContent = material['Item Name'];
+                option.dataset.unit = material['Unit']; // Store the unit
+                updateItemNameSelect.appendChild(option);
+            });
+        }
+
+        // --- Event Handlers ---
+
+        /**
+         * Handles selection change in the update materials dropdown to auto-fill unit.
+         */
+        updateItemNameSelect.addEventListener('change', () => {
+            const selectedOption = updateItemNameSelect.options[updateItemNameSelect.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                updateItemUnitInput.value = selectedOption.dataset.unit || '';
+            } else {
+                updateItemUnitInput.value = ''; // Clear unit if no item is selected
+            }
+        });
+
+        /**
+         * Handles updating stock for an item.
+         */
+        async function updateStock() {
+            const itemName = updateItemNameSelect.value.trim();
+            const quantityChange = parseFloat(stockChangeQuantityInput.value);
+            const unit = updateItemUnitInput.value.trim();
+
+            if (!itemName || isNaN(quantityChange) || !unit) {
+                showMessage('Please select an item, enter a valid quantity change, and ensure unit is filled.', 'error');
+                return;
+            }
+
+            const payload = {
+                action: 'updateInventory',
+                updates: [{ itemName: itemName, quantityChange: quantityChange, unit: unit }],
+                submittedBy: loggedInUser,
+                role: loggedInRole // Pass role for backend permission check
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Network response was not ok for updateInventory:', response.status, response.statusText, errorText);
+                    showMessage(`Stock update failed: Server responded with status ${response.status}.`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    updateItemNameSelect.value = '';
+                    stockChangeQuantityInput.value = '';
+                    updateItemUnitInput.value = '';
+                    await fetchInventoryData(); // Re-fetch and re-render inventory table
+                } else {
+                    showMessage(data.message || 'Failed to update stock.', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating stock:', error);
+                showMessage('An error occurred while updating stock. Please try again. Check console.', 'error');
+            }
+        }
+
+        /**
+         * Navigates back to the dashboard.
+         */
+        function backToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // --- Event Listeners ---
+        backToDashboardBtn.addEventListener('click', backToDashboard);
+        updateStockBtn.addEventListener('click', updateStock);
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkAuthAndLoadUserInfo();
+            await fetchInventoryData(); // Fetch and display inventory
+            // Only fetch materials list for update dropdown if section is visible
+            if (!updateInventorySection.classList.contains('hidden')) {
+                await fetchMaterialsListForUpdate();
+            }
+        });
+    </script>
+</body>
+</html>
