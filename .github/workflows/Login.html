@@ -95,81 +95,38 @@
     </div>
 
     <script>
-        // *** IMPORTANT: This will be replaced with your deployed Google Apps Script Web App URL later. ***
-        // For now, it's a placeholder.
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyN4UY88LaFnaDpGmRf_4KQ6kbIcQIkRrqdzeckOCLKvHn8PK6koNDw9EnUoLmGmljxMA/exec';
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyN4UY88LaFnaDpGmRf_4KQ6kbIcQIkRrqdzeckOCLKvHn8PK6koNDw9EnUoLmGmljxMA/exec'; // Your Script URL
 
-        // UI Elements
-        const loginForm = document.getElementById('loginForm');
-        const messageBox = document.getElementById('messageBox');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginBtn = document.getElementById('loginBtn');
+async function loginUser() {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
 
-        // --- Utility Functions ---
+    if (!username || !password) {
+        showMessage('Please enter both username and password.', 'error');
+        return;
+    }
 
-        /**
-         * Displays a message in the message box.
-         * @param {string} message - The message to display.
-         * @param {string} type - 'success' or 'error'.
-         */
-        function showMessage(message, type) {
-            messageBox.textContent = message;
-            messageBox.className = `message-box ${type}`;
-            messageBox.classList.remove('hidden');
+    const url = `${WEB_APP_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+
+    try {
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (result.success) {
+            sessionStorage.setItem('loggedInUser', JSON.stringify(result.data));
+
+            showMessage('Login successful! Redirecting...', 'success');
             setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000); // Hide after 5 seconds
+                window.location.href = 'dashboard.html'; // Same repo, separate file
+            }, 1500);
+        } else {
+            showMessage(result.message, 'error');
         }
-
-        // --- Event Handlers (Placeholder for now) ---
-
-        /**
-         * Handles the login process.
-         * This function will eventually send the username/password to your Apps Script.
-         */
-        async function loginUser() {
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-
-            if (!username || !password) {
-                showMessage('Please enter both username and password.', 'error');
-                return;
-            }
-
-            // For now, we'll just log the credentials and show a message.
-            // Later, this is where we'll make a fetch call to your Apps Script.
-            console.log('Attempting login with:', { username, password });
-            showMessage('Attempting to log in... (Connect to Apps Script next!)', 'success');
-
-            // In a real scenario, you'd make a fetch request here:
-            
-            const url = `${WEB_APP_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.success) {
-                    showMessage('Login successful! Redirecting...', 'success');
-                    // Here you would redirect to the main page or show the main app content
-                } else {
-                    showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                showMessage('An error occurred during login. Please try again.', 'error');
-            }
-            
-        }
-
-        // --- Event Listeners ---
-        loginBtn.addEventListener('click', loginUser);
-
-        // Allow pressing Enter in password field to log in
-        passwordInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                loginUser();
-            }
-        });
+    } catch (error) {
+        console.error('Login error:', error);
+        showMessage('An error occurred. Try again.', 'error');
+    }
+}
     </script>
 </body>
 </html>
