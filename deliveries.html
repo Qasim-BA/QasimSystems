@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deliveries Management - Order System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 6xl; /* Wider for tables */
+            box-sizing: border-box;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .message-box.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message-box.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .data-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Deliveries Management</h2>
+        <p class="text-center text-gray-600 mb-4">Logged in as: <span id="loggedInUser" class="font-semibold"></span> (<span id="loggedInRole" class="font-semibold"></span>)</p>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Record Delivery Section (Visible to Administrator and Storekeeper) -->
+        <div id="recordDeliverySection" class="space-y-4 mb-6 p-4 border border-green-200 bg-green-50 rounded-lg hidden">
+            <h3 class="text-xl font-bold text-green-800 mb-4">Record New Delivery</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="deliveryLpoNumber" class="block text-sm font-medium text-gray-700 mb-1">LPO Number</label>
+                    <input type="text" id="deliveryLpoNumber" class="form-input" placeholder="e.g., LPO-2025-001">
+                </div>
+                <div>
+                    <label for="deliveryItemName" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                    <input type="text" id="deliveryItemName" class="form-input" placeholder="e.g., Screwdriver Set">
+                </div>
+                <div>
+                    <label for="quantityDelivered" class="block text-sm font-medium text-gray-700 mb-1">Quantity Delivered</label>
+                    <input type="number" id="quantityDelivered" class="form-input" value="1" min="1">
+                </div>
+                <div>
+                    <label for="deliveryUnit" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                    <input type="text" id="deliveryUnit" class="form-input" placeholder="e.g., pcs">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="deliveryNotes" class="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                    <textarea id="deliveryNotes" class="form-input h-20" placeholder="Any additional notes about the delivery"></textarea>
+                </div>
+            </div>
+            <button id="recordDeliveryBtn" class="btn-primary mt-4 w-full bg-green-600 hover:bg-green-700">Record Delivery</button>
+        </div>
+
+        <!-- Existing Deliveries Display -->
+        <h3 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Recorded Deliveries</h3>
+        <div class="table-container">
+            <table class="min-w-full divide-y divide-gray-200 data-table">
+                <thead>
+                    <tr>
+                        <th>LPO Number</th>
+                        <th>Delivery Date</th>
+                        <th>Item Name</th>
+                        <th>Quantity Delivered</th>
+                        <th>Unit</th>
+                        <th>Received By</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="deliveriesListBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Deliveries will be dynamically added here -->
+                    <tr id="noDeliveriesMessage">
+                        <td colspan="7" class="py-3 text-center text-gray-500">No deliveries recorded yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 mt-8">
+            <button id="backToDashboardBtn" class="btn-secondary flex-1">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        // *** IMPORTANT: REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyFOEhdbrTuMYSe-ptV8RHMinnZRChxfXe-kkFVMkJfEtjbKusw6n7FANKzTscypeaInQ/exec';
+
+        // UI Elements
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+        const loggedInRoleSpan = document.getElementById('loggedInRole');
+        const messageBox = document.getElementById('messageBox');
+        const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+
+        const recordDeliverySection = document.getElementById('recordDeliverySection');
+        const deliveryLpoNumberInput = document.getElementById('deliveryLpoNumber');
+        const deliveryItemNameInput = document.getElementById('deliveryItemName');
+        const quantityDeliveredInput = document.getElementById('quantityDelivered');
+        const deliveryUnitInput = document.getElementById('deliveryUnit');
+        const deliveryNotesInput = document.getElementById('deliveryNotes');
+        const recordDeliveryBtn = document.getElementById('recordDeliveryBtn');
+
+        const deliveriesListBody = document.getElementById('deliveriesListBody');
+        const noDeliveriesMessage = document.getElementById('noDeliveriesMessage');
+
+        let loggedInUser = null;
+        let loggedInRole = null;
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success' or 'error'.
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${type}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Checks if the user is logged in. If not, redirects to login page.
+         * Populates user info spans and shows/hides record delivery section.
+         */
+        function checkAuthAndLoadUserInfo() {
+            const storedUser = sessionStorage.getItem('loggedInUser');
+            if (!storedUser) {
+                window.location.href = 'login.html'; // Redirect if not logged in
+                return;
+            }
+            const user = JSON.parse(storedUser);
+            loggedInUser = user.username;
+            loggedInRole = user.role;
+            loggedInUserSpan.textContent = loggedInUser;
+            loggedInRoleSpan.textContent = loggedInRole;
+
+            // Show Record Delivery Section if user is Administrator or Storekeeper
+            if (loggedInRole.toLowerCase() === 'administrator' || loggedInRole.toLowerCase() === 'storekeeper') {
+                recordDeliverySection.classList.remove('hidden');
+            } else {
+                recordDeliverySection.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Fetches existing deliveries from the Apps Script and renders them.
+         */
+        async function fetchDeliveries() {
+            try {
+                // Pass role for backend permission check
+                const url = `${WEB_APP_URL}?action=getDeliveries&role=${encodeURIComponent(loggedInRole)}`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch deliveries:', response.status, response.statusText, errorText);
+                    showMessage('Failed to load deliveries. Please try again.', 'error');
+                    return;
+                }
+                const data = await response.json();
+                if (data.success && data.data) {
+                    renderDeliveriesTable(data.data);
+                } else {
+                    showMessage(data.message || 'No deliveries recorded yet.', 'info');
+                    renderDeliveriesTable([]);
+                }
+            } catch (error) {
+                console.error('Error fetching deliveries:', error);
+                showMessage('An error occurred while fetching deliveries. Check console.', 'error');
+            }
+        }
+
+        /**
+         * Renders the deliveries data into the table.
+         * @param {Array<object>} deliveries - Array of delivery objects.
+         */
+        function renderDeliveriesTable(deliveries) {
+            deliveriesListBody.innerHTML = ''; // Clear existing rows
+            if (deliveries.length === 0) {
+                noDeliveriesMessage.classList.remove('hidden');
+                deliveriesListBody.appendChild(noDeliveriesMessage);
+            } else {
+                noDeliveriesMessage.classList.add('hidden');
+                deliveries.forEach(delivery => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${delivery['LPO Number'] || 'N/A'}</td>
+                        <td class="whitespace-nowrap">${delivery['Delivery Date']}</td>
+                        <td class="whitespace-nowrap">${delivery['Item Name']}</td>
+                        <td class="whitespace-nowrap">${delivery['Quantity Delivered']}</td>
+                        <td class="whitespace-nowrap">${delivery.Unit}</td>
+                        <td class="whitespace-nowrap">${delivery['Received By']}</td>
+                        <td class="whitespace-nowrap">${delivery.Notes || ''}</td>
+                    `;
+                    deliveriesListBody.appendChild(row);
+                });
+            }
+        }
+
+        // --- Event Handlers ---
+
+        /**
+         * Handles recording a new delivery.
+         */
+        async function recordDelivery() {
+            const lpoNumber = deliveryLpoNumberInput.value.trim();
+            const itemName = deliveryItemNameInput.value.trim();
+            const quantityDelivered = parseFloat(quantityDeliveredInput.value);
+            const unit = deliveryUnitInput.value.trim();
+            const notes = deliveryNotesInput.value.trim();
+
+            if (!lpoNumber || !itemName || isNaN(quantityDelivered) || quantityDelivered <= 0 || !unit) {
+                showMessage('Please fill in LPO Number, Item Name, Quantity Delivered (must be > 0), and Unit.', 'error');
+                return;
+            }
+
+            const payload = {
+                action: 'recordDelivery',
+                deliveryDetails: {
+                    lpoNumber: lpoNumber,
+                    itemName: itemName,
+                    quantityDelivered: quantityDelivered,
+                    unit: unit,
+                    notes: notes
+                },
+                submittedBy: loggedInUser,
+                role: loggedInRole
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Network response was not ok for recordDelivery:', response.status, response.statusText, errorText);
+                    showMessage(`Delivery record failed: Server responded with status ${response.status}.`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    // Clear form fields
+                    deliveryLpoNumberInput.value = '';
+                    deliveryItemNameInput.value = '';
+                    quantityDeliveredInput.value = 1;
+                    deliveryUnitInput.value = '';
+                    deliveryNotesInput.value = '';
+                    // Re-fetch deliveries and inventory to update tables
+                    await fetchDeliveries();
+                    // Note: Inventory update is handled by the Apps Script backend automatically
+                } else {
+                    showMessage(data.message || 'Failed to record delivery.', 'error');
+                }
+            } catch (error) {
+                console.error('Error recording delivery:', error);
+                showMessage('An error occurred while recording delivery. Please try again. Check console.', 'error');
+            }
+        }
+
+        /**
+         * Navigates back to the dashboard.
+         */
+        function backToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // --- Event Listeners ---
+        backToDashboardBtn.addEventListener('click', backToDashboard);
+        recordDeliveryBtn.addEventListener('click', recordDelivery);
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkAuthAndLoadUserInfo();
+            await fetchDeliveries(); // Fetch and display existing deliveries
+        });
+    </script>
+</body>
+</html>
