@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Management - Order System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 60rem; /* Wider for tables */
+            box-sizing: border-box;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .message-box.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message-box.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .data-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Users Management</h2>
+        <p class="text-center text-gray-600 mb-4">Logged in as: <span id="loggedInUser" class="font-semibold"></span> (<span id="loggedInRole" class="font-semibold"></span>)</p>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Update User Section (Visible to Administrator) -->
+        <div id="updateUserSection" class="space-y-4 mb-6 p-4 border border-purple-200 bg-purple-50 rounded-lg hidden">
+            <h3 class="text-xl font-bold text-purple-800 mb-4">Update User Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="selectUser" class="block text-sm font-medium text-gray-700 mb-1">Select User</label>
+                    <select id="selectUser" class="form-select">
+                        <option value="">-- Select User --</option>
+                        <!-- Users will be loaded dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password (Optional)</label>
+                    <input type="password" id="newPassword" class="form-input" placeholder="Leave blank to keep current">
+                </div>
+                <div>
+                    <label for="newRole" class="block text-sm font-medium text-gray-700 mb-1">New Role (Optional)</label>
+                    <select id="newRole" class="form-select">
+                        <option value="">-- Select New Role --</option>
+                        <option value="Administrator">Administrator</option>
+                        <option value="Purchaser">Purchaser</option>
+                        <option value="Storekeeper">Storekeeper</option>
+                        <option value="Ordinary User">Ordinary User</option>
+                    </select>
+                </div>
+            </div>
+            <button id="updateUserBtn" class="btn-primary mt-4 w-full bg-purple-600 hover:bg-purple-700">Update User</button>
+        </div>
+
+        <!-- Existing Users Display -->
+        <h3 class="text-xl font-semibold text-gray-800 mt-8 mb-4">All System Users</h3>
+        <div class="table-container">
+            <table class="min-w-full divide-y divide-gray-200 data-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Actions</th> <!-- For quick edit, maybe delete (advanced) -->
+                    </tr>
+                </thead>
+                <tbody id="usersListBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Users will be dynamically added here -->
+                    <tr id="noUsersMessage">
+                        <td colspan="3" class="py-3 text-center text-gray-500">No users found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 mt-8">
+            <button id="backToDashboardBtn" class="btn-secondary flex-1">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        // *** IMPORTANT: REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyFOEhdbrTuMYSe-ptV8RHMinnZRChxfXe-kkFVMkJfEtjbKusw6n7FANKzTscypeaInQ/exec';
+
+        // UI Elements
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+        const loggedInRoleSpan = document.getElementById('loggedInRole');
+        const messageBox = document.getElementById('messageBox');
+        const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+
+        const updateUserSection = document.getElementById('updateUserSection');
+        const selectUserDropdown = document.getElementById('selectUser');
+        const newPasswordInput = document.getElementById('newPassword');
+        const newRoleSelect = document.getElementById('newRole');
+        const updateUserBtn = document.getElementById('updateUserBtn');
+
+        const usersListBody = document.getElementById('usersListBody');
+        const noUsersMessage = document.getElementById('noUsersMessage');
+
+        let loggedInUser = null;
+        let loggedInRole = null;
+        let allUsersData = []; // To store fetched user data
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success' or 'error'.
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${type}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Checks if the user is logged in. If not, redirects to login page.
+         * Populates user info spans and shows/hides update user section.
+         */
+        function checkAuthAndLoadUserInfo() {
+            const storedUser = sessionStorage.getItem('loggedInUser');
+            if (!storedUser) {
+                window.location.href = 'login.html'; // Redirect if not logged in
+                return;
+            }
+            const user = JSON.parse(storedUser);
+            loggedInUser = user.username;
+            loggedInRole = user.role;
+            loggedInUserSpan.textContent = loggedInUser;
+            loggedInRoleSpan.textContent = loggedInRole;
+
+            // Only Administrators can access this page
+            if (loggedInRole.toLowerCase() !== 'administrator') {
+                showMessage('Access Denied: You do not have permission to manage users.', 'error');
+                setTimeout(() => window.location.href = 'dashboard.html', 2000); // Redirect non-admins
+                return;
+            }
+            updateUserSection.classList.remove('hidden'); // Show section for admin
+        }
+
+        /**
+         * Fetches all user data from the Apps Script and renders them.
+         */
+        async function fetchUsers() {
+            try {
+                // For users management, we don't pass a specific role, as the backend will check if the caller is admin
+                const url = `${WEB_APP_URL}?action=getUsers&role=${encodeURIComponent(loggedInRole)}`; // Pass role for backend check
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch users:', response.status, response.statusText, errorText);
+                    showMessage('Failed to load users. Please try again.', 'error');
+                    return;
+                }
+                const data = await response.json();
+                if (data.success && data.data) {
+                    allUsersData = data.data; // Store fetched data
+                    renderUsersTable(allUsersData);
+                    populateUserDropdown(allUsersData);
+                } else {
+                    showMessage(data.message || 'No users found.', 'info');
+                    allUsersData = [];
+                    renderUsersTable([]);
+                    populateUserDropdown([]);
+                }
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                showMessage('An error occurred while fetching users. Check console.', 'error');
+            }
+        }
+
+        /**
+         * Renders the user data into the table.
+         * @param {Array<object>} users - Array of user objects.
+         */
+        function renderUsersTable(users) {
+            usersListBody.innerHTML = ''; // Clear existing rows
+            if (users.length === 0) {
+                noUsersMessage.classList.remove('hidden');
+                usersListBody.appendChild(noUsersMessage);
+            } else {
+                noUsersMessage.classList.add('hidden');
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.Username}</td>
+                        <td class="whitespace-nowrap">${user.Role}</td>
+                        <td class="whitespace-nowrap">
+                            <button data-username="${user.Username}" class="btn-secondary text-xs px-2 py-1 rounded-md edit-user-btn">Edit</button>
+                            <!-- Future: Add Delete button if needed -->
+                        </td>
+                    `;
+                    usersListBody.appendChild(row);
+                });
+
+                // Add event listeners for edit buttons
+                document.querySelectorAll('.edit-user-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const usernameToEdit = event.target.dataset.username;
+                        // Populate the update form with the selected user's current data
+                        const userToEdit = allUsersData.find(u => u.Username === usernameToEdit);
+                        if (userToEdit) {
+                            selectUserDropdown.value = userToEdit.Username;
+                            newRoleSelect.value = userToEdit.Role; // Pre-select current role
+                            newPasswordInput.value = ''; // Always clear password field
+                        }
+                    });
+                });
+            }
+        }
+
+        /**
+         * Populates the select user dropdown with fetched users.
+         * @param {Array<object>} users - Array of user objects { Username, Role }.
+         */
+        function populateUserDropdown(users) {
+            selectUserDropdown.innerHTML = '<option value="">-- Select User --</option>'; // Reset dropdown
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.Username;
+                option.textContent = user.Username;
+                selectUserDropdown.appendChild(option);
+            });
+        }
+
+        // --- Event Handlers ---
+
+        /**
+         * Handles updating user details (password or role).
+         */
+        async function updateUser() {
+            const username = selectUserDropdown.value.trim();
+            const newPassword = newPasswordInput.value.trim();
+            const newRole = newRoleSelect.value.trim();
+
+            if (!username) {
+                showMessage('Please select a user to update.', 'error');
+                return;
+            }
+            if (!newPassword && !newRole) {
+                showMessage('Please enter a new password or select a new role to update.', 'error');
+                return;
+            }
+
+            const payload = {
+                action: 'updateUser',
+                userDetails: {
+                    username: username,
+                    newPassword: newPassword,
+                    newRole: newRole
+                },
+                role: loggedInRole // Pass admin role for backend permission check
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Network response was not ok for updateUser:', response.status, response.statusText, errorText);
+                    showMessage(`User update failed: Server responded with status ${response.status}.`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    // Clear form fields
+                    selectUserDropdown.value = '';
+                    newPasswordInput.value = '';
+                    newRoleSelect.value = '';
+                    await fetchUsers(); // Re-fetch and re-render users table and dropdown
+                } else {
+                    showMessage(data.message || 'Failed to update user.', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating user:', error);
+                showMessage('An error occurred while updating user. Please try again. Check console.', 'error');
+            }
+        }
+
+
+        /**
+         * Navigates back to the dashboard.
+         */
+        function backToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // --- Event Listeners ---
+        backToDashboardBtn.addEventListener('click', backToDashboard);
+        updateUserBtn.addEventListener('click', updateUser);
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkAuthAndLoadUserInfo();
+            // Only fetch users if the current user is an Administrator (checked in checkAuthAndLoadUserInfo)
+            if (loggedInRole && loggedInRole.toLowerCase() === 'administrator') {
+                await fetchUsers(); // Fetch and display users
+            }
+        });
+    </script>
+</body>
+</html>
