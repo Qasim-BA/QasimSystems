@@ -138,10 +138,40 @@
             }
 
             // Construct the URL for the GET request to your Apps Script
-            const url = `${WEB_APP_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+         try {
+    const response = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: 'login',
+            username,
+            password
+        })
+    });
 
-            try {
-                const response = await fetch(url);
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Network response was not ok:', response.status, response.statusText, errorText);
+        showMessage(`Login failed: Server responded with status ${response.status}. Please check console for details.`, 'error');
+        return;
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+        showMessage('Login successful! Redirecting to dashboard...', 'success');
+        sessionStorage.setItem('loggedInUser', JSON.stringify(data.user));
+        window.location.href = 'dashboard.html';
+    } else {
+        showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
+    }
+} catch (error) {
+    console.error('Login error:', error);
+    showMessage('An error occurred during login. Please try again. Check console for network errors.', 'error');
+}
+
 
                 // Check if the network response was successful (status 200-299)
                 if (!response.ok) {
