@@ -158,7 +158,7 @@
                     // Store user data (username and role) in sessionStorage for the next page
                     sessionStorage.setItem('loggedInUser', JSON.stringify(data.user));
                     // Redirect to the main application dashboard page
-                    window.location.href = 'dashboard.html'; // We will create this page next
+                    window.location.href = 'dashboard.html';
                 } else {
                     showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
                 }
